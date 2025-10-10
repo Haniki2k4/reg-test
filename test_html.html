@@ -602,6 +602,8 @@ gia đình dùng nước sạch hay không?</li>
 <li>Xây dựng mô hình hồi quy logistic để xác định các yếu tố kinh tế -
 xã hội (mức sống, trình độ học vấn của chủ hộ) dự đoán khả năng một hộ
 gia đình sở hữu nhà tiêu hợp vệ sinh.</li>
+<li>Sự thay đổi của các vấn đề nghiên cứu trong vòng 20 năm qua
+(2000-2021) và dự báo sự thay đổi trong 10 năm tới.</li>
 </ol>
 <p><strong>Mô tả số liệu:</strong></p>
 <p>Bộ dữ liệu được lấy từ khảo sát MICS 6 (2021) của UNICEF tại Việt
@@ -626,6 +628,7 @@ thôn</p></li>
 thị</p></li>
 <li><p><code>helevel</code>: Trình độ học vấn của chủ hộ</p></li>
 <li><p><code>HC2</code>: Dân tộc chủ hộ</p></li>
+<li><p><code>HH5Y</code>: Năm tiến hành nghiên cứu</p></li>
 </ul></li>
 </ul>
 </div>
@@ -751,8 +754,9 @@ khác nhau.</li>
 </ul>
 <p><strong>Cách xử lý:</strong></p>
 <ul>
-<li><p>Thay giá trị thiếu bằng <strong>trung vị</strong> của biến tương
-ứng (không loại bỏ quan sát).</p></li>
+<li><p>Thay dữ liệu thiếu bằng cách sử dụng thuật toán
+<strong>KNN</strong> để dự đoán giá trị của dữ liệu thiếu thông qua các
+dữ liệu xung quang dữ liệu thiếu.</p></li>
 <li><p>Giữ nguyên giá trị trong
 <code>windex5r, windex5u</code>.</p></li>
 </ul>
@@ -950,12 +954,13 @@ nông thôn kém hơn.</p></li>
 năng có nhà tiêu hợp vệ sinh thấp hơn.</p></li>
 </ul>
 </div>
-<div id="phân-tích-mối-liên-quan-giữa-yếu-tố-về-điều-kiện-kinh-tế-ở-thành-thị-hoặc-nông-thôn-và-học-vấn-với-khả-năng-có-nhà-tiêu-hợp-vệ-sinh." class="section level4 tabset tabset-fade tabset-pills">
+<div id="phân-tích-mối-liên-quan-giữa-yếu-tố-về-điều-kiện-kinh-tế---xã-hội-ở-thành-thị-hoặc-nông-thôn-và-học-vấn-với-khả-năng-có-nhà-tiêu-hợp-vệ-sinh." class="section level4 tabset tabset-fade tabset-pills">
 <h4 class="tabset tabset-fade tabset-pills"><strong>3.2.2. Phân tích mối
-liên quan giữa yếu tố về điều kiện kinh tế (ở thành thị hoặc nông thôn)
-và học vấn với khả năng có nhà tiêu hợp vệ sinh.</strong></h4>
-<div id="điều-kiện-kinh-tế-ở-nông-thôn" class="section level5">
-<h5>Điều kiện kinh tế ở nông thôn</h5>
+liên quan giữa yếu tố về điều kiện kinh tế - xã hội (ở thành thị hoặc
+nông thôn) và học vấn với khả năng có nhà tiêu hợp vệ
+sinh.</strong></h4>
+<div id="điều-kiện-ở-nông-thôn" class="section level5">
+<h5>Điều kiện ở nông thôn</h5>
 <pre><code>## 
 ## Call:
 ## glm(formula = improved_sanitation ~ windex5r + helevel + HC2, 
@@ -986,8 +991,8 @@ vệ sinh.</p>
 nghĩa thống kê rất mạnh (p &lt; 0.001).</li>
 </ul>
 </div>
-<div id="điều-kiện-kinh-tế-ở-thành-thị" class="section level5">
-<h5>Điều kiện kinh tế ở thành thị</h5>
+<div id="điều-kiện-ở-thành-thị" class="section level5">
+<h5>Điều kiện ở thành thị</h5>
 <pre><code>## 
 ## Call:
 ## glm(formula = improved_sanitation ~ windex5u + helevel + HC2, 

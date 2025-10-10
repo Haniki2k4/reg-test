@@ -47,6 +47,7 @@ library(purrr)
 1.  Mô tả tỷ lệ các hộ gia đình được tiếp cận với nguồn nước sạch và nhà tiêu hợp vệ sinh. Trực quan hóa sự chênh lệch về các chỉ số này giữa khu vực thành thị và nông thôn.
 2.  Kiểm định giả thuyết: Liệu các hộ gia đình sử dụng nguồn nước không an toàn có tỷ lệ trẻ em (\< 5 tuổi) bị tiêu chảy cao hơn so với các hộ gia đình dùng nước sạch hay không?
 3.  Xây dựng mô hình hồi quy logistic để xác định các yếu tố kinh tế - xã hội (mức sống, trình độ học vấn của chủ hộ) dự đoán khả năng một hộ gia đình sở hữu nhà tiêu hợp vệ sinh.
+4.  Sự thay đổi của các vấn đề nghiên cứu trong vòng 20 năm qua (2000-2021) và dự báo sự thay đổi trong 10 năm tới.
 
 **Mô tả số liệu:**
 
@@ -75,6 +76,8 @@ Các biến số chính được sử dụng
     -   `helevel`: Trình độ học vấn của chủ hộ
 
     -   `HC2`: Dân tộc chủ hộ
+
+    -   `HH5Y`: Năm tiến hành nghiên cứu
 
 ## **1. Kết quả làm sạch dữ liệu**
 
@@ -135,7 +138,7 @@ kable(ch_missing, caption="Bảng 2. Tỷ lệ thiếu dữ liệu trong ch.sav"
 
 **Cách xử lý:**
 
--   Thay giá trị thiếu bằng **trung vị** của biến tương ứng (không loại bỏ quan sát).
+-   Thay dữ liệu thiếu bằng cách sử dụng thuật toán **KNN** để dự đoán giá trị của dữ liệu thiếu thông qua các dữ liệu xung quang dữ liệu thiếu.
 
 -   Giữ nguyên giá trị trong `windex5r, windex5u`.
 
@@ -388,9 +391,9 @@ summary(model1)
 
 -   `HC2` (-0.23412): Dân tộc thiểu số có khả năng có khả năng có nhà tiêu hợp vệ sinh thấp hơn.
 
-#### **3.2.2. Phân tích mối liên quan giữa yếu tố về điều kiện kinh tế (ở thành thị hoặc nông thôn) và học vấn với khả năng có nhà tiêu hợp vệ sinh.** {.tabset .tabset-fade .tabset-pills}
+#### **3.2.2. Phân tích mối liên quan giữa yếu tố về điều kiện kinh tế - xã hội (ở thành thị hoặc nông thôn) và học vấn với khả năng có nhà tiêu hợp vệ sinh.** {.tabset .tabset-fade .tabset-pills}
 
-##### Điều kiện kinh tế ở nông thôn
+##### Điều kiện ở nông thôn
 
 ```{r regression_r}
 model2 <- glm(improved_sanitation ~ windex5r + helevel + HC2,
@@ -404,7 +407,7 @@ summary(model2)
 
 -   `windex5r`, `helevel`, `HC2` có ý nghĩa thống kê rất mạnh (p \< 0.001).
 
-##### Điều kiện kinh tế ở thành thị
+##### Điều kiện ở thành thị
 
 ```{r regression_u}
 model3 <- glm(improved_sanitation ~ windex5u + helevel + HC2,
