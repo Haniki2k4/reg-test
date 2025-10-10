@@ -1,0 +1,757 @@
+---
+title: "Báo Cáo Sơ Bộ - Môi Trường Sống và Sức Khỏe Hộ Gia Đình"
+author: "Nhóm 5"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    df_print: kable
+---
+
+```{css, echo=FALSE}
+    body {
+      font-size: 16px;
+      font-family: Calibri;
+    }
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE,
+  fig.width = 7,
+  fig.height = 5
+)
+
+# Thư viện cần thiết
+library(haven)      # đọc file .sav
+library(dplyr)      # xử lý dữ liệu
+library(ggplot2)    # trực quan hóa
+library(janitor)    # tabyl tần số
+library(tidyr)      # reshape dữ liệu
+library(scales)     # hiển thị %
+library(knitr)
+library(kableExtra)
+library(MASS)
+library(VIM)
+library(zoo)      # Cần cho việc nội suy na.approx()
+library(forecast) # Thư viện chính cho mô hình chuỗi thời gian (ARIMA, Holt)
+library(ggfortify)# Để vẽ đồ thị forecast đẹp hơn với ggplot2
+library(purrr)
+```
+
+### **Chủ đề nghiên cứu:** Mối liên quan giữa điều kiện vệ sinh, nguồn nước, và sức khỏe của các thành viên trong hộ gia đình.
+
+**Câu hỏi nghiên cứu:**
+
+1.  Mô tả tỷ lệ các hộ gia đình được tiếp cận với nguồn nước sạch và nhà tiêu hợp vệ sinh. Trực quan hóa sự chênh lệch về các chỉ số này giữa khu vực thành thị và nông thôn.
+2.  Kiểm định giả thuyết: Liệu các hộ gia đình sử dụng nguồn nước không an toàn có tỷ lệ trẻ em (\< 5 tuổi) bị tiêu chảy cao hơn so với các hộ gia đình dùng nước sạch hay không?
+3.  Xây dựng mô hình hồi quy logistic để xác định các yếu tố kinh tế - xã hội (mức sống, trình độ học vấn của chủ hộ) dự đoán khả năng một hộ gia đình sở hữu nhà tiêu hợp vệ sinh.
+
+**Mô tả số liệu:**
+
+Bộ dữ liệu được lấy từ khảo sát MICS 6 (2021) của UNICEF tại Việt Nam, bao gồm các thông tin về hộ gia đình, trẻ em và các yếu tố liên quan đến sức khỏe cộng đồng.
+
+Các biến số chính được sử dụng
+
+-   Biến phụ thuộc:
+
+    -   `WS11`: Loại nhà vệ sinh của hộ gia đình.
+
+    -   `WS1`: Nguồn nước uống chính của hộ gia đình
+
+    -   `CA1`: Trẻ có bị tiêu chảy trong 2 tuần qua không.
+
+-   Biến độc lập:
+
+    -   `HH6`: Khu vực sinh sống
+
+    -   `windex5`: Mức sống kinh tế của hộ gia đình
+
+    -   `windex5r`: Mức sống kinh tế của hộ gia đình ở nông thôn
+
+    -   `windex5u`: Mức sống kinh tế của hộ gia đình ở thành thị
+
+    -   `helevel`: Trình độ học vấn của chủ hộ
+
+    -   `HC2`: Dân tộc chủ hộ
+
+## **1. Kết quả làm sạch dữ liệu**
+
+```{r load-data, results = 'hide'}
+read_hh <- function(path, vars) {
+  read_sav(path) %>% dplyr::select(any_of(vars))
+}
+
+read_ch <- function(path, vars) {
+  read_sav(path) %>% dplyr::select(any_of(vars))
+}
+
+# --- Đọc dữ liệu các năm MICS ---
+vars_hh_ms6 <- c("HH1","HH2","HH6","WS1","WS11","helevel","HC2","windex5","windex5r","windex5u","HH5Y")
+vars_hh_ms5 <- c("HH1","HH2","HH6","WS1","WS8","helevel","windex5","HH5Y")
+vars_hh_ms4 <- c("HH1","HH2","HH6","WS1","WS8","helevel","windex5","HH5Y")
+vars_hh_ms3 <- c("diaban","hh2","hh6","ws1","ws7","helevel","wlthind5","hh5y")
+vars_hh_ms2 <- c("HI1","HI2","HI6","WS1","WS3","ED16A","WLTHIND5")
+
+vars_ch <- c("HH1","HH2","CA1")
+
+# MICS6
+hh6 <- read_hh("E:/regression-analysis/final-exam/Viet Nam MICS6 Datasets/Viet Nam MICS6 SPSS Datasets/hh.sav", vars_hh_ms6)
+ch6 <- read_ch("E:/regression-analysis/final-exam/Viet Nam MICS6 Datasets/Viet Nam MICS6 SPSS Datasets/ch.sav", vars_ch)
+
+# MICS5
+hh5 <- read_hh("E:/regression-analysis/final-exam/Regression-Analysis/final-exam/Viet Nam_MICS5_Datasets/Viet Nam MICS 2013-14 SPSS Datasets/hh.sav", vars_hh_ms5)
+ch5 <- read_ch("E:/regression-analysis/final-exam/Regression-Analysis/final-exam/Viet Nam_MICS5_Datasets/Viet Nam MICS 2013-14 SPSS Datasets/ch.sav", vars_ch)
+
+# MICS4
+hh4 <- read_hh("E:/regression-analysis/final-exam/Regression-Analysis/final-exam/Vietnam_MICS4_Datasets/Vietnam MICS 2010-2011 SPSS Datasets/hh.sav", vars_hh_ms4)
+ch4 <- read_ch("E:/regression-analysis/final-exam/Regression-Analysis/final-exam/Vietnam_MICS4_Datasets/Vietnam MICS 2010-2011 SPSS Datasets/ch.sav", vars_ch)
+
+# MICS3
+hh3 <- read_hh("E:/regression-analysis/final-exam/Regression-Analysis/final-exam/Vietnam_Datasets/Vietnam MICS 2006 SPSS Datasets/hh.sav", vars_hh_ms3)
+ch3 <- read_ch("E:/regression-analysis/final-exam/Regression-Analysis/final-exam/Vietnam_Datasets/Vietnam MICS 2006 SPSS Datasets/ch.sav", c("diaban","hh2","ca1"))
+
+# MICS2
+hh2 <- read_hh("E:/regression-analysis/final-exam/Regression-Analysis/final-exam/Viet Nam 2000 MICS_Datasets/hhVI.sav", vars_hh_ms2)
+ch2 <- read_ch("E:/regression-analysis/final-exam/Regression-Analysis/final-exam/Viet Nam 2000 MICS_Datasets/chVI.sav", c("HI1","HI2","CI1"))
+```
+
+**Xử lý missing:**
+
+```{r find_mising}
+# Kiểm tra missing
+# Tính tỷ lệ missing
+hh_missing <- hh6 %>% summarise(across(everything(), ~ mean(is.na(.))*100))
+ch_missing <- ch6 %>% summarise(across(everything(), ~ mean(is.na(.))*100))
+
+kable(hh_missing, caption="Bảng 1. Tỷ lệ thiếu dữ liệu trong hh.sav") %>% kable_styling()
+kable(ch_missing, caption="Bảng 2. Tỷ lệ thiếu dữ liệu trong ch.sav") %>% kable_styling()
+```
+
+**Tỷ lệ dữ liệu thiếu:** đa phần các biến có tỷ lệ thiếu thấp 0–4.6%.
+
+-   **Hai biến có tỷ lệ thiếu cao:** `windex5r` (30.06%) và `windex5u` (65.36%) do áp dụng cho nhóm khu vực khác nhau.
+
+**Cách xử lý:**
+
+-   Thay giá trị thiếu bằng **trung vị** của biến tương ứng (không loại bỏ quan sát).
+
+-   Giữ nguyên giá trị trong `windex5r, windex5u`.
+
+```{r op-missing, results = 'hide'}
+# --- KNN Imputation (chỉ cho numeric, trừ windex5r & windex5u) ---
+hh_temp <- hh6 %>% dplyr::select(-c(windex5r, windex5u))
+hh_knn  <- VIM::kNN(hh_temp, k = 5) %>% dplyr::select(-matches("_imp$"))
+
+# Ghép lại với 2 biến đặc thù
+hh6_clean <- bind_cols(
+  hh_knn,
+  hh6 %>% dplyr::select(any_of(c("windex5r", "windex5u")))
+)
+
+# Kiểm tra lại
+colMeans(is.na(hh6_clean))*100
+```
+
+```{r create-vars, f}
+# Biến tiêu chảy ở trẻ
+ch6_clean <- ch6 %>% 
+  mutate(diarrhea = if_else(CA1 == 1, 1, 0))
+
+# Gom theo hộ: hộ có ít nhất 1 trẻ bị tiêu chảy
+diarrhea_hh <- ch6_clean %>% 
+  group_by(HH1, HH2) %>% 
+  summarise(
+    any_diarrhea = if (all(is.na(diarrhea))) NA_real_ else max(diarrhea, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Ghép vào dữ liệu hộ
+hh6_clean <- hh6_clean %>% 
+  left_join(diarrhea_hh, by = c("HH1", "HH2"))
+
+# Tạo biến về nước và vệ sinh
+hh6_clean <- hh6_clean %>% 
+  mutate(
+    safe_water = case_when(
+      WS1 %in% c(11,12,13,14,21,31,41,51,72,91,92) ~ 1,
+      WS1 %in% c(32,42,61,71,81,96,99) ~ 0,
+      TRUE ~ NA_real_
+    ),
+    improved_sanitation = case_when(
+      WS11 %in% c(11,12,21,22,31) ~ 1,
+      WS11 %in% c(13,14,18,23,41,51,95,96,99) ~ 0,
+      TRUE ~ NA_real_
+    )
+  )
+
+
+```
+
+**Các biến mới đã được tạo:**
+
+-   Biến `diarrhea`: bằng 1 nếu trẻ trong hộ được báo cáo là bị tiêu chảy trong vòng 2 tuần trước khảo sát, bằng 0 nếu không bị.
+
+-   Biến `any_diarrhea`: bằng 1 nếu trong hộ có ít nhất một trẻ bị tiêu chảy, bằng 0 nếu không có.
+
+-   Biến `safe_water`: bằng 1 nếu nguồn nước sinh hoạt thuộc nhóm an toàn (nước máy, giếng khoan), bằng 0 nếu không thuộc nhóm an toàn (nước, sông, ao hồ).
+
+-   Biến `improved_sanitation`: bằng 1 nếu hộ có nhà tiêu hợp vệ sinh và bằng 0 nếu không có.
+
+## **2. Thống kê mô tả và trực quan hóa**
+
+```{r descriptives}
+# Tần số nước sạch & nhà tiêu
+tabyl(hh6_clean, safe_water) %>%
+  mutate(safe_water = case_when(
+    safe_water == 1 ~ "Có",
+    safe_water == 0 ~ "Không",
+    TRUE ~ as.character(safe_water)
+  )) %>%
+  kable(caption = "Bảng 2. Tần số hộ có nước sạch",
+        align = "lcc")
+
+# Bảng Improved Sanitation
+tabyl(hh6_clean, improved_sanitation) %>%
+  mutate(improved_sanitation = case_when(
+    improved_sanitation == 1 ~ "Có",
+    improved_sanitation == 0 ~ "Không",
+    TRUE ~ as.character(improved_sanitation)
+  )) %>%
+  kable(caption = "Bảng 3. Tần số hộ có nhà tiêu hợp vệ sinh",
+        align = "lcc") 
+```
+
+*Nhận xét:* Khoảng 96% hộ sử dụng nguồn nước an toàn và khoảng 79% hộ có nhà tiêu hợp vệ sinh, cho thấy điều kiện vệ sinh nhìn chung khá tốt.
+
+### *Biểu đồ tròn tỷ lệ* {.tabset .tabset-fade .tabset-pills}
+
+#### Tỷ lệ hộ sử dụng nước sạch
+
+```{r pie-safe-water, echo=FALSE}
+safe_tab <- hh6_clean %>% 
+  filter(!is.na(safe_water)) %>% 
+  count(safe_water) %>% 
+  mutate(pct = round(n / sum(n) * 100, 1),
+         label = paste0(pct, "%"))
+
+ggplot(safe_tab, aes(x = "", y = n, fill = factor(safe_water))) +
+  geom_col(width = 1) +
+  coord_polar(theta = "y") +
+  geom_text(aes(label = label),
+            position = position_stack(vjust = 0.5),
+            color = "white", size = 4) +
+  scale_fill_manual(
+    name = "Nước sạch",
+    values = c("0" = "#e74c3c", "1" = "#2ecc71"),  # màu: đỏ/ xanh
+    labels = c("0" = "Không", "1" = "Có")         # đổi nhãn
+  ) +
+  labs(title = "Tỉ lệ hộ sử dụng nguồn nước an toàn tại Việt Nam năm 2021") +
+  theme_void()
+```
+
+**Nhận xét:** Tỷ lệ hộ có nguồn nước an toàn là 96% cho thấy đa số hộ gia đình sử dụng nước sạch, cho thấy hạ tầng cấp nước khá tốt.
+
+#### Tỷ lệ hộ có nhà tiêu hợp vệ sinh
+
+```{r pie-sanitation, echo=FALSE}
+san_tab <- hh6_clean %>% 
+  filter(!is.na(improved_sanitation)) %>% 
+  count(improved_sanitation) %>% 
+  mutate(pct = round(n / sum(n) * 100, 1),
+         label = paste0(pct, "%"))
+
+ggplot(san_tab, aes(x = "", y = n, fill = factor(improved_sanitation))) +
+  geom_col(width = 1) +
+  coord_polar(theta = "y") +
+  geom_text(aes(label = label),
+            position = position_stack(vjust = 0.5),
+            color = "white", size = 4) +
+  scale_fill_manual(
+    name = "Nhà tiêu hợp vệ sinh",
+    values = c("0" = "#e67e22", "1" = "#3498db"),
+    labels = c("0" = "Không", "1" = "Có")
+  ) +
+  labs(title = "Tỉ lệ hộ có Nhà tiêu hợp vệ sinh tại Việt Nam năm 2021") +
+  theme_void()
+```
+
+**Nhận xét:** Tỷ lệ hộ có nhà tiêu hợp vệ sinh là 79%, vẫn còn 21% hộ chưa có nhà tiêu đạt chuẩn, tiềm ẩn nguy cơ ô nhiễm.
+
+### *Biểu đồ cột so sánh theo khu vực* {.tabset .tabset-fade .tabset-pills}
+
+#### Nước sạch
+
+```{r bar-area-safe, echo=FALSE}
+# Nước sạch theo khu vực
+water_by_area <- hh6_clean %>% 
+  filter(!is.na(safe_water)) %>% 
+  group_by(HH6, safe_water) %>% 
+  summarise(n = n(), .groups = "drop") %>% 
+  group_by(HH6) %>% 
+  mutate(pct = n / sum(n) * 100)
+
+ggplot(water_by_area, aes(x = factor(HH6), y = pct, fill = factor(safe_water))) +
+  geom_col() +
+  geom_text(aes(label = paste0(round(pct,1), "%")), 
+            position = position_stack(vjust = 0.5),
+            color = "white", size = 4) +
+  scale_fill_manual(
+    name = "Nước sạch",
+    values = c("0" = "#e74c3c", "1" = "#2ecc71"),  # màu đỏ và xanh
+    labels = c("0" = "Không", "1" = "Có")         # nhãn hiển thị
+  ) +
+  labs(
+    title = "Tỷ lệ hộ có sử dụng Nguồn nước an toàn theo khu vực tại Việt Nam năm 2021",
+    x = "Khu vực (1 = Thành thị, 2 = Nông thôn)",
+    y = "Tỷ lệ (%)"
+  ) +
+  theme_minimal()
+
+```
+
+**Nhận xét:** Việt Nam đạt tỷ lệ hộ sử dụng nước sạch rất cao, đặc biệt tại khu vực thành thị. Tuy nhiên, chênh lệch giữa nông thôn và thành thị (5%) cho thấy vẫn cần tiếp tục đầu tư và cải thiện hệ thống cấp nước ở nông thôn để đảm bảo công bằng trong tiếp cận nguồn nước an toàn.
+
+#### Nhà tiêu hợp vệ sinh
+
+```{r bar-area-san, echo=FALSE}
+# Nhà tiêu theo khu vực
+san_by_area <- hh6_clean %>% 
+  filter(!is.na(improved_sanitation)) %>% 
+  group_by(HH6, improved_sanitation) %>% 
+  summarise(n = n(), .groups = "drop") %>% 
+  group_by(HH6) %>% 
+  mutate(pct = n / sum(n) * 100)
+
+ggplot(san_by_area, aes(x = factor(HH6), y = pct, fill = factor(improved_sanitation))) +
+  geom_col() +
+  geom_text(aes(label = paste0(round(pct,1), "%")), 
+            position = position_stack(vjust = 0.5),
+            color = "white", size = 4) +
+  scale_fill_manual(
+    name = "Nhà tiêu hợp vệ sinh",
+    values = c("0" = "#e67e22", "1" = "#3498db"),  # màu cam và xanh dương
+    labels = c("0" = "Không", "1" = "Có")
+  ) +
+  labs(
+    title = "Tỷ lệ hộ có Nhà tiêu hợp vệ sinh phân theo khu vực tại Việt Nam năm 2021",
+    x = "Khu vực (1 = Thành thị, 2 = Nông thôn)",
+    y = "Tỷ lệ (%)"
+  ) +
+  theme_minimal()
+
+```
+
+**Nhận xét:** Khu vực thành thị có điều kiện vệ sinh tốt hơn nhiều so với nông thôn. Tỷ lệ hộ có nhà tiêu hợp vệ sinh ở nông thôn thấp hơn 19.2% so với thành thị.
+
+## **3. Kết quả phân tích hai biến**
+
+### 3.1. Kiểm định Chi-squared
+
+```{r chi-square}
+chisq_res <- chisq.test(hh6_clean$safe_water, hh6_clean$any_diarrhea)
+knitr::kable(as.data.frame(chisq_res$observed),
+             caption="Bảng 4. Bảng chéo giữa Nước sạch và Tiêu chảy")
+```
+
+[Bảng 5. Kết quả kiểm định Chi-squared]{style="color: gray;"}
+
+```{r chi-square-2}
+chisq_res
+```
+
+**Nhận xét:** p = 0.01291 \< 0.05 -\> Có mối liên hệ thống kê có ý nghĩa giữa việc sử dụng nước sạch và tình trạng tiêu chảy ở trẻ em trong mẫu khảo sát này.
+
+### 3.2. Phân tích hồi quy logistic
+
+#### **3.2.1. Phân tích mối liên quan giữa yếu tố về điều kiện kinh tế và học vấn với khả năng có nhà tiêu hợp vệ sinh.**
+
+[Bảng 6. Kết quả hồi quy logistic (Odds Ratio)]{style="color: gray;"}
+
+```{r regression}
+# Hồi quy logistic
+model1 <- glm(improved_sanitation ~ windex5 + helevel + HH6 + HC2,
+             data = hh6_clean,
+             family = binomial)
+
+summary(model1)
+```
+
+**Nhận xét:** Tất cả các biến đều có ý nghĩa thống kê. Mô hình cho thấy **điều kiện kinh tế** và **học vấn** là **yếu tố quyết định tích cực**, trong khi **khu vực và dân tộc** là rào cản đối với vệ sinh cải thiện.
+
+-   `windex5` (0.56181): Mức sống cao → xác suất có nhà tiêu hợp vệ sinh **tăng**
+
+-   `helevel` (0.27874): Học vấn chủ hộ cao → **tăng khả năng có** nhà tiêu hợp vệ sinh**.**
+
+-   `HH6` (-0.52970): Khu vực (thành thị/nông thôn) có ảnh hưởng **âm**, cho thấy khả năng có nhà tiêu hợp vệ sinh ở nông thôn kém hơn.
+
+-   `HC2` (-0.23412): Dân tộc thiểu số có khả năng có khả năng có nhà tiêu hợp vệ sinh thấp hơn.
+
+#### **3.2.2. Phân tích mối liên quan giữa yếu tố về điều kiện kinh tế (ở thành thị hoặc nông thôn) và học vấn với khả năng có nhà tiêu hợp vệ sinh.** {.tabset .tabset-fade .tabset-pills}
+
+##### Điều kiện kinh tế ở nông thôn
+
+```{r regression_r}
+model2 <- glm(improved_sanitation ~ windex5r + helevel + HC2,
+             data = hh6_clean,
+             family = binomial)
+
+summary(model2)
+```
+
+**Nhận xét:** Ở khu vực nông thôn, mức sống và học vấn vẫn là hai yếu tố có ảnh hưởng rõ rệt nhất đến khả năng có nhà tiêu hợp vệ sinh.
+
+-   `windex5r`, `helevel`, `HC2` có ý nghĩa thống kê rất mạnh (p \< 0.001).
+
+##### Điều kiện kinh tế ở thành thị
+
+```{r regression_u}
+model3 <- glm(improved_sanitation ~ windex5u + helevel + HC2,
+             data = hh6_clean,
+             family = binomial)
+
+summary(model3) 
+```
+
+**Nhận xét:** Ở thành thị, các yếu tố mức sống và học vấn vẫn là yếu tố chính quyết định việc có nhà tiêu hợp vệ sinh.
+
+-   `windex5u`, `HC2` có ý nghĩa thống kê (p \< 0.001).
+
+#### \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+
+**--\>Kết luận:** Các mô hình đều chỉ ra rằng điều kiện kinh tế và trình độ học vấn của chủ hộ là hai yếu tố có tác động tích cực mạnh mẽ nhất đến khả năng có nhà tiêu hợp vệ sinh. Ngược lại, yếu tố dân tộc và khu vực sinh sống là những rào cản đáng kể, đặc biệt ở vùng nông thôn hoặc trong các nhóm dân tộc thiểu số.
+
+------------------------------------------------------------------------
+
+## **4. Sự thay đổi của các vấn đề trong 20 năm (2000-2021)**
+
+```{r load_data1}
+# Xử lý MICS 2000
+clean_mics2 <- hh2 %>%
+  dplyr::select(
+    area = HI6,
+    water_source = WS1,
+    toilet_type = WS3,
+    wealth_quintile = WLTHIND5 
+  ) %>%
+  mutate(
+    year = 2000,
+    improved_water = ifelse(water_source %in% c(01,02,03,04,05,06,08), 1, 0),
+    improved_sanitation = ifelse(toilet_type %in% c(1,2,3,4), 1, 0)
+  )
+
+# Xử lý MICS 2006
+clean_mics3 <- hh3 %>%
+  dplyr::select(
+    area = hh6,
+    water_source = ws1,
+    toilet_type = ws7,
+    wealth_quintile = wlthind5, 
+    education = helevel,
+    year = hh5y
+  ) %>%
+  mutate(
+    improved_water = ifelse(water_source %in% c(11,12,13,21,31,41,51), 1, 0),
+    improved_sanitation = ifelse(toilet_type %in% c(11,12,13,21,22,31), 1, 0)
+  )
+
+
+# Xử lý MICS 2010-11
+clean_mics4 <- hh4 %>%
+  dplyr::select(
+    area = HH6,
+    water_source = WS1,
+    toilet_type = WS8,
+    wealth_quintile = windex5,
+    education = helevel,
+    year = HH5Y
+  ) %>%
+  mutate(
+    improved_water = ifelse(water_source %in% c(11,12,13,14,21,31,41,51,91), 1, 0),
+    improved_sanitation = ifelse(toilet_type %in% c(11,12,21,22,31), 1, 0)
+  )
+
+# Xử lý MICS 2013-14
+clean_mics5 <- hh5 %>%
+  dplyr::select(
+    area = HH6,
+    water_source = WS1,
+    toilet_type = WS8,
+    wealth_quintile = windex5,
+    education = helevel,
+    year = HH5Y
+  ) %>%
+  mutate(
+    improved_water = ifelse(water_source %in% c(11,12,13,14,21,31,41,51), 1, 0),
+    improved_sanitation = ifelse(toilet_type %in% c(11,12,21,22,31), 1, 0)
+  )
+
+# Xử lý MICS 2021
+clean_mics6 <- hh6 %>%
+  dplyr::select(
+    area = HH6,
+    water_source = WS1,
+    toilet_type = WS11,
+    wealth_quintile = windex5,
+    education = helevel,
+    year = HH5Y
+  ) %>%
+  mutate(
+    improved_water = ifelse(water_source %in% c(11,12,13,14,21,31,41,51,91,92), 1, 0),
+    improved_sanitation = ifelse(toilet_type %in% c(11,12,21,22,31), 1, 0)
+  )
+
+all_mics_data <- bind_rows(
+  clean_mics6,
+  clean_mics5,
+  clean_mics4,
+  clean_mics3,
+  clean_mics2
+)
+```
+
+### **4.1. Phân tích 1: Xu hướng và Dự báo Chuỗi thời gian (2000-2021)**
+
+#### **Trực quan hóa Xu hướng Tỷ lệ Tiếp cận** {.tabset .tabset-fade .tabset-pills}
+
+##### Nguồn nước Hợp vệ sinh
+
+```{r plot_trends}
+# Tính toán tỷ lệ phần trăm
+summary_stats <- all_mics_data %>%
+  filter(!is.na(area)) %>%
+  group_by(year, area) %>%
+  summarise(
+    pct_improved_water = mean(improved_water, na.rm = TRUE),
+    pct_improved_sanitation = mean(improved_sanitation, na.rm = TRUE),
+    .groups = 'drop'
+  ) %>%
+  mutate(
+    year = as.numeric(year),
+    pct_improved_water = as.numeric(pct_improved_water),
+    area = area
+  )
+# Biểu đồ xu hướng nguồn nước
+ggplot(summary_stats, aes(x = year, y = pct_improved_water, color = factor(area), group = factor(area))) +
+  geom_line(linewidth = 1.2) +
+  geom_point(size = 3) +
+  geom_smooth(method = "lm", se = FALSE, linetype = "dashed") +
+  scale_y_continuous(
+    labels = scales::percent,
+    limits = c(0.5, 1),
+    breaks = seq(0.5, 1, 0.1)
+  ) +
+  scale_color_manual(
+    name = "Khu vực",                       # Tiêu đề chú thích
+    values = c("1" = "#00bec5", "2" = "#f9776d"), # Màu: xanh lam / xanh lá
+    labels = c("1" = "Urban", "2" = "Rural")      # Gán nhãn mới
+  ) +
+  labs(
+    title = "Xu hướng Tiếp cận Nguồn nước Hợp vệ sinh (2000–2021)",
+    subtitle = "Đường nét đứt thể hiện xu thế tuyến tính",
+    x = "Năm",
+    y = "Tỷ lệ Hộ gia đình",
+    color = "Khu vực"
+  ) +
+  theme_minimal(base_size = 14)
+
+
+
+```
+
+##### Nhà tiêu Hợp vệ sinh
+
+```{r plot-trend-2}
+# Biểu đồ xu hướng nhà tiêu
+ggplot(summary_stats, aes(x = year, y = pct_improved_sanitation, color = factor(area), group = factor(area))) +
+  geom_line(linewidth = 1.2) + 
+  geom_point(size = 3) +
+  geom_smooth(method = "lm", se = FALSE, linetype = "dashed") +
+  scale_y_continuous(labels = scales::percent, limits = c(0, 1)) +
+  scale_color_manual(
+    name = "Khu vực",                       # Tiêu đề chú thích
+    values = c("1" = "#00bec5", "2" = "#f9776d"), # Màu: xanh lam / xanh lá
+    labels = c("1" = "Urban", "2" = "Rural")      # Gán nhãn mới
+  ) +
+  labs(
+    title = "Xu hướng Sử dụng Nhà tiêu Hợp vệ sinh (2000-2021)",
+    subtitle = "Đường nét đứt thể hiện xu thế tuyến tính",
+    x = "Năm", y = "Tỷ lệ Hộ gia đình", color = "Khu vực"
+  ) + 
+  theme_minimal(base_size = 14)
+```
+
+**Nhận xét:** Biểu đồ cho thấy sự cải thiện đáng kể trong việc tiếp cận nước sạch và nhà tiêu hợp vệ sinh trên cả nước. Khu vực thành thị duy trì tỷ lệ cao hơn, nhưng khu vực nông thôn có tốc độ tăng trưởng ấn tượng, đặc biệt là về nhà tiêu hợp vệ sinh, góp phần thu hẹp khoảng cách.
+
+#### **Mô hình hóa và Dự báo bằng ARIMA** {.tabset .tabset-fade .tabset-pills}
+
+Do dữ liệu được thu thập không đều -\> sử dụng phương pháp **nội suy tuyến tính** để tạo chuỗi thời gian hàng năm, sau đó áp dụng mô hình `auto.arima` để tìm ra mô hình phù hợp nhất và dự báo cho 10 năm tới.
+
+```{r arima_forecasting}
+# Hàm tạo dự báo tự động
+create_forecast <- function(data, value_col, area_filter, title_text) {
+  ts_data_sparse <- data %>% filter(area == area_filter)
+  full_years <- data.frame(year = min(data$year):max(data$year))
+  
+  ts_data_full <- full_years %>% left_join(ts_data_sparse, by = "year")
+  ts_data_full$interpolated <- zoo::na.approx(ts_data_full[[value_col]], na.rm = FALSE)
+  
+  ts_object <- ts(ts_data_full$interpolated, start = min(data$year), frequency = 1)
+  
+  # Tạo nhãn khu vực
+  area_label <- ifelse(area_filter == 1, "Thành thị", 
+                       ifelse(area_filter == 2, "Nông thôn", as.character(area_filter)))
+  
+  # Mô hình và dự báo
+  arima_model <- forecast::auto.arima(ts_object)
+  arima_forecast <- forecast::forecast(arima_model, h = 10)
+  
+  # Biểu đồ dự báo
+  plot <- forecast::autoplot(arima_forecast) +
+    geom_point(data = ts_data_sparse, aes_string(x = "year", y = value_col),
+               color = "red", size = 3) +
+    scale_y_continuous(labels = scales::percent) +
+    labs(
+      title = paste("Dự báo:", title_text, "-", area_label),
+      subtitle = "Dữ liệu nội suy từ các điểm khảo sát (màu đỏ)",
+      x = "Năm", y = "Tỷ lệ Hộ gia đình (%)"
+    ) +
+    theme_minimal(base_size = 14) +
+    theme(
+      plot.title = element_text(family = "Times New Roman", face = "bold", size = 16),
+      plot.subtitle = element_text(family = "Times New Roman", size = 13)
+    )
+  
+  print(plot)
+  cat(paste0("\n**Mô hình ARIMA cho ", title_text, " - ", area_label, "**\n"))
+  print(summary(arima_model))
+  
+  return(arima_forecast)
+}
+
+```
+
+##### Nguồn nước - Nông thôn
+
+```{r forcasting_1}
+f_water_rural <- create_forecast(summary_stats, "pct_improved_water", 2, "Tỷ lệ Nguồn nước Hợp vệ sinh")
+```
+
+##### Nhà tiêu - Nông thôn
+
+```{r forcasting_2}
+f_sanitation_rural <- create_forecast(summary_stats, "pct_improved_sanitation", 2, "Tỷ lệ Nhà tiêu Hợp vệ sinh")
+```
+
+##### Nguồn nước - Thành thị
+
+```{r forcasting_3}
+f_water_urban <- create_forecast(summary_stats, "pct_improved_water", 1, "Tỷ lệ Nguồn nước Hợp vệ sinh")
+```
+
+##### Nhà tiêu - Thành thị
+
+```{r forcasting_4}
+f_sanitation_urban <- create_forecast(summary_stats, "pct_improved_sanitation", 1, "Tỷ lệ Nhà tiêu Hợp vệ sinh")
+```
+
+#### 
+
+**Diễn giải kết quả ARIMA:** Các mô hình ARIMA cho thấy
+
+### **4.2. Kiểm định Giả thuyết về Nước sạch và Bệnh Tiêu chảy**
+
+Chúng tôi kiểm định giả thuyết "Hộ gia đình sử dụng nguồn nước không an toàn có tỷ lệ trẻ em (\< 5 tuổi) bị tiêu chảy cao hơn" bằng kiểm định Chi-bình phương.
+
+```{r chi_square_test}
+# Tạo một hàm xử lý để tránh lặp code.
+# Hàm này sẽ nhận vào dữ liệu hộ gia đình, dữ liệu trẻ em, năm, và một "bản đồ" tên biến.
+process_mics_data <- function(hh_df, ch_df, year, vars_map) {
+  # Đổi tên cột child data để nhất quán
+  names(ch_df)[names(ch_df) == vars_map$id1_ch] <- "ID1"
+  names(ch_df)[names(ch_df) == vars_map$id2_ch] <- "ID2"
+  names(ch_df)[names(ch_df) == vars_map$diarrhea] <- "DIARRHEA_VAR"
+  
+  # Đổi tên cột household data để nhất quán
+  names(hh_df)[names(hh_df) == vars_map$id1_hh] <- "ID1"
+  names(hh_df)[names(hh_df) == vars_map$id2_hh] <- "ID2"
+  names(hh_df)[names(hh_df) == vars_map$water] <- "WATER_VAR"
+
+  # Tạo biến improved_water
+  hh_df <- hh_df %>%
+    mutate(
+      improved_water = ifelse(WATER_VAR %in% vars_map$safe_water_codes, 1, 0)
+    )
+
+  # Tạo biến has_diarrhea từ child data
+  ch_df <- ch_df %>%
+    mutate(has_diarrhea = ifelse(DIARRHEA_VAR == 1, 1, 0))
+
+  # Gộp hai bộ dữ liệu
+  merged_df <- inner_join(
+    hh_df %>% dplyr::select(ID1, ID2, improved_water),
+    ch_df %>% dplyr::select(ID1, ID2, has_diarrhea),
+    by = c("ID1", "ID2")
+  ) %>%
+  mutate(year = year)
+
+  return(merged_df)
+}
+
+# Định nghĩa các biến và mã số khác nhau cho từng năm (giữ nguyên)
+map_mics2 <- list(id1_hh="HI1", id2_hh="HI2", water="WS1", id1_ch="HI1", id2_ch="HI2", diarrhea="CI1", safe_water_codes = c(1,2,8,11,12,13))
+map_mics3 <- list(id1_hh="diaban", id2_hh="hh2", water="ws1", id1_ch="diaban", id2_ch="hh2", diarrhea="ca1", safe_water_codes = c(11:14, 21, 31, 41, 51, 91))
+map_mics4 <- list(id1_hh="HH1", id2_hh="HH2", water="WS1", id1_ch="HH1", id2_ch="HH2", diarrhea="CA1", safe_water_codes = c(11:14, 21, 31, 41, 51, 91))
+map_mics5 <- list(id1_hh="HH1", id2_hh="HH2", water="WS1", id1_ch="HH1", id2_ch="HH2", diarrhea="CA1", safe_water_codes = c(11:14, 21, 31, 41, 51, 91))
+map_mics6 <- list(id1_hh="HH1", id2_hh="HH2", water="WS1", id1_ch="HH1", id2_ch="HH2", diarrhea="CA1", safe_water_codes = c(11:14, 21, 31, 41, 51, 72, 91, 92))
+
+# Tạo list các bộ dữ liệu đã đọc vào
+list_of_hh_data <- list(hh2, hh3, hh4, hh5, hh6)
+list_of_ch_data <- list(ch2, ch3, ch4, ch5, ch6)
+list_of_maps <- list(map_mics2, map_mics3, map_mics4, map_mics5, map_mics6)
+
+# SỬA LỖI: Đảm bảo list các năm có đúng 5 phần tử
+list_of_years <- c(2000, 2006, 2011, 2014, 2021)
+
+# Áp dụng hàm xử lý cho tất cả các năm và gộp lại thành một bảng duy nhất
+all_diarrhea_data <- pmap_dfr(
+  list(list_of_hh_data, list_of_ch_data, list_of_years, list_of_maps),
+  process_mics_data
+)
+
+# --- Bước 2: Tính toán tỷ lệ tiêu chảy theo năm và nhóm nguồn nước ---
+diarrhea_trends <- all_diarrhea_data %>%
+  na.omit() %>%
+  group_by(year, improved_water) %>%
+  summarise(
+    diarrhea_rate = mean(has_diarrhea, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    water_status = ifelse(improved_water == 1, "Nước sạch", "Nước không sạch")
+  )
+
+cat("\n**Bảng tổng hợp Tỷ lệ tiêu chảy theo năm và chất lượng nước**\n")
+print(diarrhea_trends)
+
+
+# --- Bước 3: Trực quan hóa chuỗi thời gian ---
+ggplot(diarrhea_trends, aes(x = year, y = diarrhea_rate, color = water_status, group = water_status)) +
+  geom_line(linewidth = 1.2) +
+  geom_point(size = 4) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(
+    title = "Xu hướng Tỷ lệ Tiêu chảy ở Trẻ em theo Chất lượng Nguồn nước (2000-2021)",
+    subtitle = "So sánh giữa các hộ gia đình sử dụng nước sạch và nước không sạch",
+    x = "Năm",
+    y = "Tỷ lệ Trẻ em bị Tiêu chảy (%)",
+    color = "Chất lượng Nguồn nước"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(legend.position = "bottom")
+```
+
+**Diễn giải kết quả:**
+
+------------------------------------------------------------------------
