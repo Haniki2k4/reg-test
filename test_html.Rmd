@@ -79,7 +79,8 @@ Các biến số chính được sử dụng
 
     -   `HH5Y`: Năm tiến hành nghiên cứu
 
-## **1. Kết quả làm sạch dữ liệu**
+## **I. ** 
+### **1. Kết quả làm sạch dữ liệu**
 
 ```{r func-load-data, results = 'hide'}
 read_hh <- function(path, vars, mics) {
@@ -130,7 +131,7 @@ read_ch <- function(path, vars, mics) {
 }
 ```
 
-``` {r load-data, results = 'hide'}
+```{r load-data, results = 'hide'}
 # --- Đọc dữ liệu các năm MICS ---
 # MICS6
 vars_hh_ms6 <- c("HH1","HH2","HH6","WS1","WS11","helevel","HC2","windex5","windex5r","windex5u","HH5Y")
@@ -249,7 +250,7 @@ hh6_clean <- hh6_clean %>%
 
 -   Biến `improved_sanitation`: bằng 1 nếu hộ có nhà tiêu hợp vệ sinh và bằng 0 nếu không có.
 
-## **2. Thống kê mô tả và trực quan hóa**
+### **2. Thống kê mô tả và trực quan hóa**
 
 ```{r descriptives}
 # Tần số nước sạch & nhà tiêu
@@ -273,11 +274,11 @@ tabyl(hh6_clean, improved_sanitation) %>%
         align = "lcc") 
 ```
 
-*Nhận xét:* Khoảng 96% hộ sử dụng nguồn nước an toàn và khoảng 79% hộ có nhà tiêu hợp vệ sinh, cho thấy điều kiện vệ sinh nhìn chung khá tốt.
+*Nhận xét:* Khoảng 96% hộ sử dụng nguồn nước sạch và khoảng 79% hộ có nhà tiêu hợp vệ sinh, cho thấy điều kiện vệ sinh nhìn chung khá tốt.
 
-### *Biểu đồ tròn tỷ lệ* {.tabset .tabset-fade .tabset-pills}
+#### *Biểu đồ tròn tỷ lệ* {.tabset .tabset-fade .tabset-pills}
 
-#### Tỷ lệ hộ sử dụng nước sạch
+##### Tỷ lệ hộ sử dụng nước sạch
 
 ```{r pie-safe-water, echo=FALSE}
 safe_tab <- hh6_clean %>% 
@@ -297,13 +298,13 @@ ggplot(safe_tab, aes(x = "", y = n, fill = factor(safe_water))) +
     values = c("0" = "#e74c3c", "1" = "#2ecc71"),  # màu: đỏ/ xanh
     labels = c("0" = "Không", "1" = "Có")         # đổi nhãn
   ) +
-  labs(title = "Tỉ lệ hộ sử dụng nguồn nước an toàn tại Việt Nam năm 2021") +
+  labs(title = "Tỉ lệ hộ sử dụng nguồn nước sạch tại Việt Nam năm 2021") +
   theme_void()
 ```
 
-**Nhận xét:** Tỷ lệ hộ có nguồn nước an toàn là 96% cho thấy đa số hộ gia đình sử dụng nước sạch, cho thấy hạ tầng cấp nước khá tốt.
+**Nhận xét:** Tỷ lệ hộ có nguồn nước sạch là 96% cho thấy đa số hộ gia đình sử dụng nước sạch, cho thấy hạ tầng cấp nước khá tốt.
 
-#### Tỷ lệ hộ có nhà tiêu hợp vệ sinh
+##### Tỷ lệ hộ có nhà tiêu hợp vệ sinh
 
 ```{r pie-sanitation, echo=FALSE}
 san_tab <- hh6_clean %>% 
@@ -329,9 +330,9 @@ ggplot(san_tab, aes(x = "", y = n, fill = factor(improved_sanitation))) +
 
 **Nhận xét:** Tỷ lệ hộ có nhà tiêu hợp vệ sinh là 79.4%, vẫn còn 20.6% hộ chưa có nhà tiêu đạt chuẩn, tiềm ẩn nguy cơ ô nhiễm.
 
-### *Biểu đồ cột so sánh theo khu vực* {.tabset .tabset-fade .tabset-pills}
+#### *Biểu đồ cột so sánh theo khu vực* {.tabset .tabset-fade .tabset-pills}
 
-#### Nước sạch
+##### Nước sạch
 
 ```{r bar-area-safe, echo=FALSE}
 # Nước sạch theo khu vực
@@ -353,7 +354,7 @@ ggplot(water_by_area, aes(x = factor(HH6), y = pct, fill = factor(safe_water))) 
     labels = c("0" = "Không", "1" = "Có")         # nhãn hiển thị
   ) +
   labs(
-    title = "Tỷ lệ hộ có sử dụng Nguồn nước an toàn theo khu vực tại Việt Nam năm 2021",
+    title = "Tỷ lệ hộ có sử dụng Nguồn nước sạch theo khu vực tại Việt Nam năm 2021",
     x = "Khu vực (1 = Thành thị, 2 = Nông thôn)",
     y = "Tỷ lệ (%)"
   ) +
@@ -361,9 +362,9 @@ ggplot(water_by_area, aes(x = factor(HH6), y = pct, fill = factor(safe_water))) 
 
 ```
 
-**Nhận xét:** Việt Nam đạt tỷ lệ hộ sử dụng nước sạch rất cao, đặc biệt tại khu vực thành thị. Tuy nhiên, chênh lệch giữa nông thôn và thành thị (5%) cho thấy vẫn cần tiếp tục đầu tư và cải thiện hệ thống cấp nước ở nông thôn để đảm bảo công bằng trong tiếp cận nguồn nước an toàn.
+**Nhận xét:** Việt Nam đạt tỷ lệ hộ sử dụng nước sạch rất cao, đặc biệt tại khu vực thành thị. Tuy nhiên, chênh lệch giữa nông thôn và thành thị (5%) cho thấy vẫn cần tiếp tục đầu tư và cải thiện hệ thống cấp nước ở nông thôn để đảm bảo công bằng trong tiếp cận nguồn nước sạch.
 
-#### Nhà tiêu hợp vệ sinh
+##### Nhà tiêu hợp vệ sinh
 
 ```{r bar-area-san, echo=FALSE}
 # Nhà tiêu theo khu vực
@@ -395,9 +396,9 @@ ggplot(san_by_area, aes(x = factor(HH6), y = pct, fill = factor(improved_sanitat
 
 **Nhận xét:** Khu vực thành thị có điều kiện vệ sinh tốt hơn nhiều so với nông thôn. Tỷ lệ hộ có nhà tiêu hợp vệ sinh ở nông thôn thấp hơn 18.4% so với thành thị.
 
-## **3. Kết quả phân tích hai biến**
+### **3. Kết quả phân tích mối liên quan**
 
-### 3.1. Kiểm định Chi-squared
+#### 3.1. Kiểm định Chi-squared
 
 ```{r chi-square}
 chisq_res <- chisq.test(hh6_clean$safe_water, hh6_clean$any_diarrhea)
@@ -413,7 +414,7 @@ chisq_res
 
 **Nhận xét:** p = 0.01291 \< 0.05 -\> Có mối liên hệ thống kê có ý nghĩa giữa việc sử dụng nước sạch và tình trạng tiêu chảy ở trẻ em trong mẫu khảo sát này.
 
-### 3.2. Phân tích hồi quy logistic
+#### 3.2. Phân tích hồi quy logistic
 
 #### **3.2.1. Phân tích mối liên quan giữa yếu tố về điều kiện kinh tế và học vấn với khả năng có nhà tiêu hợp vệ sinh.**
 
@@ -474,7 +475,7 @@ summary(model3)
 
 ------------------------------------------------------------------------
 
-## **4. Sự thay đổi của các vấn đề trong 20 năm (2000-2021)**
+## **II. Sự thay đổi của các vấn đề trong 20 năm (2000-2021)**
 
 ```{r load_data1}
 # Xử lý MICS 2000
@@ -561,11 +562,11 @@ all_mics_data <- bind_rows(
 )
 ```
 
-### **4.1. Phân tích 1: Xu hướng và Dự báo Chuỗi thời gian (2000-2021)**
+### **1. Xu hướng và Dự báo Chuỗi thời gian (2000-2021)**
 
-#### **Trực quan hóa Xu hướng Tỷ lệ Tiếp cận** {.tabset .tabset-fade .tabset-pills}
+#### Trực quan hóa Xu hướng Tỷ lệ Tiếp cận nước sạch và Nhà tiêu hợp vệ sinh {.tabset .tabset-fade .tabset-pills}
 
-##### Nguồn nước Hợp vệ sinh
+##### Nguồn nước sạch
 
 ```{r plot_trends}
 # Tính toán tỷ lệ phần trăm
@@ -595,10 +596,10 @@ ggplot(summary_stats, aes(x = year, y = pct_improved_water, color = factor(area)
   scale_color_manual(
     name = "Khu vực",                       # Tiêu đề chú thích
     values = c("1" = "#00bec5", "2" = "#f9776d"), # Màu: xanh lam / xanh lá
-    labels = c("1" = "Urban", "2" = "Rural")      # Gán nhãn mới
+    labels = c("1" = "Thành thị", "2" = "Nông thôn")      # Gán nhãn mới
   ) +
   labs(
-    title = "Xu hướng Tiếp cận Nguồn nước Hợp vệ sinh (2000–2021)",
+    title = "Mô hình xu hướng Tiếp cận Nguồn nước sạch (2000–2021)",
     subtitle = "Đường nét đứt thể hiện xu thế tuyến tính",
     x = "Năm",
     y = "Tỷ lệ Hộ gia đình",
@@ -609,6 +610,8 @@ ggplot(summary_stats, aes(x = year, y = pct_improved_water, color = factor(area)
 
 
 ```
+
+**Nhận xét:**
 
 ##### Nhà tiêu Hợp vệ sinh
 
@@ -622,21 +625,23 @@ ggplot(summary_stats, aes(x = year, y = pct_improved_sanitation, color = factor(
   scale_color_manual(
     name = "Khu vực",                       # Tiêu đề chú thích
     values = c("1" = "#00bec5", "2" = "#f9776d"), # Màu: xanh lam / xanh lá
-    labels = c("1" = "Urban", "2" = "Rural")      # Gán nhãn mới
+    labels = c("1" = "Thành thị", "2" = "Nông thôn")      # Gán nhãn mới
   ) +
   labs(
-    title = "Xu hướng Sử dụng Nhà tiêu Hợp vệ sinh (2000-2021)",
+    title = "Mô hình xu hướng Sử dụng Nhà tiêu Hợp vệ sinh (2000-2021)",
     subtitle = "Đường nét đứt thể hiện xu thế tuyến tính",
     x = "Năm", y = "Tỷ lệ Hộ gia đình", color = "Khu vực"
   ) + 
   theme_minimal(base_size = 14)
 ```
 
-**Nhận xét:** Biểu đồ cho thấy sự cải thiện đáng kể trong việc tiếp cận nước sạch và nhà tiêu hợp vệ sinh trên cả nước. Khu vực thành thị duy trì tỷ lệ cao hơn, nhưng khu vực nông thôn có tốc độ tăng trưởng ấn tượng, đặc biệt là về nhà tiêu hợp vệ sinh, góp phần thu hẹp khoảng cách.
+**Nhận xét:**
+
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
 
 #### **Mô hình hóa và Dự báo bằng ARIMA** {.tabset .tabset-fade .tabset-pills}
 
-Do dữ liệu được thu thập không đều -\> sử dụng phương pháp **nội suy tuyến tính** để tạo chuỗi thời gian hàng năm, sau đó áp dụng mô hình `auto.arima` để tìm ra mô hình phù hợp nhất và dự báo cho 10 năm tới.
+Do dữ liệu được thu thập không đều -\> Sử dụng phương pháp **nội suy tuyến tính** để tạo chuỗi thời gian hàng năm, sau đó áp dụng mô hình `auto.arima` để tìm ra mô hình phù hợp nhất và dự báo cho 10 năm tới.
 
 ```{r arima_forecasting}
 # Hàm tạo dự báo tự động
@@ -685,34 +690,38 @@ create_forecast <- function(data, value_col, area_filter, title_text) {
 ##### Nguồn nước - Nông thôn
 
 ```{r forcasting_1}
-f_water_rural <- create_forecast(summary_stats, "pct_improved_water", 2, "Tỷ lệ Nguồn nước Hợp vệ sinh")
+f_water_rural <- create_forecast(summary_stats, "pct_improved_water", 2, "Tỷ lệ  sử dụng Nguồn nước sạch")
 ```
+
+**Diễn giải kết quả:**
 
 ##### Nhà tiêu - Nông thôn
 
 ```{r forcasting_2}
-f_sanitation_rural <- create_forecast(summary_stats, "pct_improved_sanitation", 2, "Tỷ lệ Nhà tiêu Hợp vệ sinh")
+f_sanitation_rural <- create_forecast(summary_stats, "pct_improved_sanitation", 2, "Tỷ lệ tiếp cận Nhà tiêu Hợp vệ sinh")
 ```
+
+**Diễn giải kết quả:**
 
 ##### Nguồn nước - Thành thị
 
 ```{r forcasting_3}
-f_water_urban <- create_forecast(summary_stats, "pct_improved_water", 1, "Tỷ lệ Nguồn nước Hợp vệ sinh")
+f_water_urban <- create_forecast(summary_stats, "pct_improved_water", 1, "Tỷ lệ sử dụng Nguồn nước sạch")
 ```
+
+**Diễn giải kết quả:**
 
 ##### Nhà tiêu - Thành thị
 
 ```{r forcasting_4}
-f_sanitation_urban <- create_forecast(summary_stats, "pct_improved_sanitation", 1, "Tỷ lệ Nhà tiêu Hợp vệ sinh")
+f_sanitation_urban <- create_forecast(summary_stats, "pct_improved_sanitation", 1, "Tỷ lệ tiếp cận Nhà tiêu Hợp vệ sinh")
 ```
+
+**Diễn giải kết quả:**
 
 #### 
 
-**Diễn giải kết quả ARIMA:** Các mô hình ARIMA cho thấy
-
-### **4.2. Kiểm định Giả thuyết về Nước sạch và Bệnh Tiêu chảy**
-
-Chúng tôi kiểm định giả thuyết "Hộ gia đình sử dụng nguồn nước không an toàn có tỷ lệ trẻ em (\< 5 tuổi) bị tiêu chảy cao hơn" bằng kiểm định Chi-bình phương.
+### **2. Kiểm định Giả thuyết về Nước sạch và Bệnh Tiêu chảy qua 20 năm**
 
 ```{r chi_square_test, fig.dim = c(10,8)}
 # Tạo một hàm xử lý để tránh lặp code.
@@ -790,7 +799,7 @@ ggplot(diarrhea_trends, aes(x = year, y = diarrhea_rate, color = water_status, g
   geom_point(size = 4) +
   scale_y_continuous(labels = scales::percent_format()) +
   labs(
-    title = "Xu hướng Tỷ lệ Tiêu chảy ở Trẻ em theo Chất lượng Nguồn nước (2000-2021)",
+    title = "Mô hình xu hướng Tỷ lệ Tiêu chảy ở Trẻ em theo Chất lượng Nguồn nước (2000-2021)",
     subtitle = "So sánh giữa các hộ gia đình sử dụng nước sạch và nước không sạch",
     x = "Năm",
     y = "Tỷ lệ Trẻ em bị Tiêu chảy (%)",
