@@ -48,33 +48,51 @@ read_ch <- function(path, vars, mics) {
 
 # --- MICS 6 (2021) ---
 vars_hh_ms6 <- c("HH1","HH2","HH6","WS1","WS11","helevel","HC2","windex5","windex5r","windex5u","HH5Y")
-hh6 <- read_hh("E:/regression-analysis/final-exam/Viet Nam MICS6 Datasets/Viet Nam MICS6 SPSS Datasets/hh.sav",
+hh6 <- read_hh("https://github.com/Haniki2k4/Regression-Analysis/raw/refs/heads/main/final-exam/Viet%20Nam%20MICS6%20Datasets/Viet%20Nam%20MICS6%20SPSS%20Datasets/hh.sav",
                vars_hh_ms6, mics = 6)
 ch6 <- read_ch(
-  "E:/regression-analysis/final-exam/Viet Nam MICS6 Datasets/Viet Nam MICS6 SPSS Datasets/ch.sav",
+  "https://github.com/Haniki2k4/Regression-Analysis/raw/refs/heads/main/final-exam/Viet%20Nam%20MICS6%20Datasets/Viet%20Nam%20MICS6%20SPSS%20Datasets/ch.sav",
   vars = c("HH1", "HH2", "CA1", "UF10"),
   mics = 6
 )
 
 # --- MICS 5 (2014) ---
 vars_hh_ms5 <- c("HH1","HH2","HH6","WS1","WS8","helevel","windex5","HH5Y")
-hh5 <- read_hh("E:/regression-analysis/final-exam/Regression-Analysis/final-exam/Viet Nam_MICS5_Datasets/Viet Nam MICS 2013-14 SPSS Datasets/hh.sav",
+hh5 <- read_hh("https://github.com/Haniki2k4/Regression-Analysis/raw/refs/heads/main/final-exam/Viet%20Nam_MICS5_Datasets/Viet%20Nam%20MICS%202013-14%20SPSS%20Datasets/hh.sav",
                vars_hh_ms5, mics = 5)
+ch5 <- read_ch("https://github.com/Haniki2k4/Regression-Analysis/raw/refs/heads/main/final-exam/Viet%20Nam_MICS5_Datasets/Viet%20Nam%20MICS%202013-14%20SPSS%20Datasets/ch.sav",
+                vars = c("HH1", "HH2", "CA1", "UF9"),
+                mics = 5)
 
 # --- MICS 4 (2011) ---
 vars_hh_ms4 <- c("HH1","HH2","HH6","WS1","WS8","helevel","windex5","HH5Y")
-hh4 <- read_hh("E:/regression-analysis/final-exam/Regression-Analysis/final-exam/Vietnam_MICS4_Datasets/Vietnam MICS 2010-2011 SPSS Datasets/hh.sav",
+hh4 <- read_hh("https://github.com/Haniki2k4/Regression-Analysis/raw/refs/heads/main/final-exam/Vietnam_MICS4_Datasets/Vietnam%20MICS%202010-2011%20SPSS%20Datasets/hh.sav",
                vars_hh_ms4, mics = 4)
+ch4 <- read_ch(
+  "https://github.com/Haniki2k4/Regression-Analysis/raw/refs/heads/main/final-exam/Vietnam_MICS4_Datasets/Vietnam%20MICS%202010-2011%20SPSS%20Datasets/ch.sav",
+  vars = c("HH1", "HH2", "CA1", "UF9"),
+  mics = 4
+)
 
 # --- MICS 3 (2006) ---
 vars_hh_ms3 <- c("diaban","hh2","hh6","ws1","ws7","helevel","wlthind5","hh5y")
-hh3 <- read_hh("E:/regression-analysis/final-exam/Regression-Analysis/final-exam/Vietnam_Datasets/Vietnam MICS 2006 SPSS Datasets/hh.sav",
+hh3 <- read_hh("https://github.com/Haniki2k4/Regression-Analysis/raw/refs/heads/main/final-exam/Vietnam_Datasets/Vietnam%20MICS%202006%20SPSS%20Datasets/hh.sav",
                vars_hh_ms3, mics = 3)
+ch3 <- read_ch(
+  "https://github.com/Haniki2k4/Regression-Analysis/raw/refs/heads/main/final-exam/Vietnam_Datasets/Vietnam%20MICS%202006%20SPSS%20Datasets/ch.sav",
+  vars = c("diaban", "hh2", "ca1"),
+  mics = 3
+)
 
 # --- MICS 2 (2000) ---
 vars_hh_ms2 <- c("HI1","HI2","HI6","WS1","WS3","ED16A","WLTHIND5")
-hh2 <- read_hh("E:/regression-analysis/final-exam/Regression-Analysis/final-exam/Viet Nam 2000 MICS_Datasets/hhVI.sav",
+hh2 <- read_hh("https://github.com/Haniki2k4/Regression-Analysis/raw/refs/heads/main/final-exam/Viet%20Nam%202000%20MICS_Datasets/hhVI.sav",
                vars_hh_ms2, mics = 2)
+ch2 <- read_ch(
+  "https://github.com/Haniki2k4/Regression-Analysis/raw/refs/heads/main/final-exam/Viet%20Nam%202000%20MICS_Datasets/chVI.sav",
+  vars = c("HI1", "HI2", "CI1"),
+  mics = 2
+)
 
 # Xử lý dữ liệu MICS 2021 (giữ nguyên)
 ch6_clean <- ch6 %>% mutate(diarrhea = if_else(CA1 == 1, 1, 0))
