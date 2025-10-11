@@ -48,48 +48,48 @@ read_ch <- function(path, vars, mics) {
 
 # --- MICS 6 (2021) ---
 vars_hh_ms6 <- c("HH1","HH2","HH6","WS1","WS11","helevel","HC2","windex5","windex5r","windex5u","HH5Y")
-hh6 <- read_hh("E:/regression-analysis/test/data/Vietnam_MICS6_Datasets/hh.sav",
+hh6 <- read_hh("data/Vietnam_MICS6_Datasets/hh.sav",
                vars_hh_ms6, mics = 6)
 ch6 <- read_ch(
-  "E:/regression-analysis/test/data/Vietnam_MICS6_Datasets/ch.sav",
+  "data/Vietnam_MICS6_Datasets/ch.sav",
   vars = c("HH1", "HH2", "CA1", "UF10"),
   mics = 6
 )
 
 # --- MICS 5 (2014) ---
 vars_hh_ms5 <- c("HH1","HH2","HH6","WS1","WS8","helevel","windex5","HH5Y")
-hh5 <- read_hh("E:/regression-analysis/test/data/Vietnam_MICS5_Datasets/hh.sav",
+hh5 <- read_hh("data/Vietnam_MICS5_Datasets/hh.sav",
                vars_hh_ms5, mics = 5)
-ch5 <- read_ch("E:/regression-analysis/test/data/Vietnam_MICS5_Datasets/ch.sav",
+ch5 <- read_ch("data/Vietnam_MICS5_Datasets/ch.sav",
                 vars = c("HH1", "HH2", "CA1", "UF9"),
                 mics = 5)
 
 # --- MICS 4 (2011) ---
 vars_hh_ms4 <- c("HH1","HH2","HH6","WS1","WS8","helevel","windex5","HH5Y")
-hh4 <- read_hh("E:/regression-analysis/test/data/Vietnam_MICS4_Datasets/hh.sav",
+hh4 <- read_hh("data/Vietnam_MICS4_Datasets/hh.sav",
                vars_hh_ms4, mics = 4)
 ch4 <- read_ch(
-  "E:/regression-analysis/test/data/Vietnam_MICS4_Datasets/ch.sav",
+  "data/Vietnam_MICS4_Datasets/ch.sav",
   vars = c("HH1", "HH2", "CA1", "UF9"),
   mics = 4
 )
 
 # --- MICS 3 (2006) ---
 vars_hh_ms3 <- c("diaban","hh2","hh6","ws1","ws7","helevel","wlthind5","hh5y")
-hh3 <- read_hh("E:/regression-analysis/test/data/Vietnam_MICS3_Datasets/hh.sav",
+hh3 <- read_hh("data/Vietnam_MICS3_Datasets/hh.sav",
                vars_hh_ms3, mics = 3)
 ch3 <- read_ch(
-  "E:/regression-analysis/test/data/Vietnam_MICS3_Datasets/ch.sav",
+  "data/Vietnam_MICS3_Datasets/ch.sav",
   vars = c("diaban", "hh2", "ca1"),
   mics = 3
 )
 
 # --- MICS 2 (2000) ---
 vars_hh_ms2 <- c("HI1","HI2","HI6","WS1","WS3","ED16A","WLTHIND5")
-hh2 <- read_hh("E:/regression-analysis/test/data/Vietnam_MICS2_Datasets/hhVI.sav",
+hh2 <- read_hh("data/Vietnam_MICS2_Datasets/hhVI.sav",
                vars_hh_ms2, mics = 2)
 ch2 <- read_ch(
-  "E:/regression-analysis/test/data/Vietnam_MICS2_Datasets/chVI.sav",
+  "data/Vietnam_MICS2_Datasets/chVI.sav",
   vars = c("HI1", "HI2", "CI1"),
   mics = 2
 )
