@@ -291,13 +291,19 @@ server <- function(input, output) {
   
   # Biểu đồ tròn Nước sạch
   output$pie_water <- renderPlotly({
-    safe_tab <- hh6_clean %>% 
-      filter(!is.na(safe_water)) %>% 
+    safe_tab <- hh6_clean %>%
+      filter(!is.na(safe_water)) %>%
       count(safe_water) %>%
-      mutate(label = ifelse(safe_water == 1, "Có", "Không"))
+      mutate(
+        label = ifelse(safe_water == 1, "Có", "Không"),
+        pct = n / sum(n) * 100,
+        text_label = paste0(round(pct, 0), "%") 
+      )
     
     plot_ly(safe_tab, labels = ~label, values = ~n, type = 'pie',
-            marker = list(colors = c('#e74c3c', '#2ecc71'))) %>%
+            text = ~text_label,
+            textinfo = 'text', 
+            marker = list(colors = c('Không' = '#e74c3c', 'Có' = '#2ecc71'))) %>%
       layout(title = 'Tỷ lệ hộ sử dụng nguồn nước sạch')
   })
   
@@ -306,9 +312,15 @@ server <- function(input, output) {
     san_tab <- hh6_clean %>% 
       filter(!is.na(improved_sanitation)) %>% 
       count(improved_sanitation) %>%
-      mutate(label = ifelse(improved_sanitation == 1, "Có", "Không"))
+      mutate(
+        label = ifelse(improved_sanitation == 1, "Có", "Không"),
+        pct = n / sum(n) * 100,
+        text_label = paste0(round(pct, 0), "%") 
+      )
     
     plot_ly(san_tab, labels = ~label, values = ~n, type = 'pie',
+            text = ~text_label,
+            textinfo = 'text', 
             marker = list(colors = c('#e67e22', '#3498db'))) %>%
       layout(title = 'Tỷ lệ hộ có nhà tiêu hợp vệ sinh')
   })
@@ -386,12 +398,25 @@ server <- function(input, output) {
   # Biểu đồ xu hướng nước sạch
   output$trend_plot_water <- renderPlotly({
     p <- ggplot(summary_stats, aes(x = year, y = pct_improved_water, color = factor(area), group = factor(area))) +
-      geom_line(linewidth = 1) + geom_point(size = 2.5) +
+      geom_line(linewidth = 1) + 
+      geom_point(size = 2.5) +
       scale_y_continuous(labels = scales::percent, limits = c(0.7, 1)) +
-      scale_color_manual(name = "Khu vực", values = c("1" = "#00bec5", "2" = "#f9776d"), labels = c("1" = "Thành thị", "2" = "Nông thôn")) +
+      scale_color_manual(name = "Khu vực", values = c("1" = "#00bec5", "2" = "#f9776d")) +
       labs(title = "Xu hướng Tiếp cận Nguồn nước sạch (2000–2021)", x = "Năm", y = "Tỷ lệ Hộ gia đình") +
       theme_minimal(base_size = 12)
-    ggplotly(p)
+    
+    pl <- ggplotly(p)
+    for (i in 1:length(pl$x$data)) {
+      current_name <- pl$x$data[[i]]$name
+      if (current_name == "1") {
+        pl$x$data[[i]]$name <- "Thành thị"
+      } else if (current_name == "2") {
+        pl$x$data[[i]]$name <- "Nông thôn"
+      }
+    }
+    
+    # Bước 4: Trả về đối tượng plotly đã được chỉnh sửa
+    return(pl)
   })
   
   # Biểu đồ xu hướng nhà tiêu HVS
@@ -402,7 +427,16 @@ server <- function(input, output) {
       scale_color_manual(name = "Khu vực", values = c("1" = "#00bec5", "2" = "#f9776d"), labels = c("1" = "Thành thị", "2" = "Nông thôn")) +
       labs(title = "Xu hướng Sử dụng Nhà tiêu Hợp vệ sinh (2000-2021)", x = "Năm", y = "Tỷ lệ Hộ gia đình") +
       theme_minimal(base_size = 12)
-    ggplotly(p)
+    
+    pl <- ggplotly(p)
+    for (i in 1:length(pl$x$data)) {
+      current_name <- pl$x$data[[i]]$name
+      if (current_name == "1") {
+        pl$x$data[[i]]$name <- "Thành thị"
+      } else if (current_name == "2") {
+        pl$x$data[[i]]$name <- "Nông thôn"
+      }
+    }
   })
   
   # Reactive expression cho mô hình ARIMA
@@ -434,7 +468,7 @@ server <- function(input, output) {
     
     autoplot(res$forecast) +
       geom_point(data = res$sparse_data, aes_string(x = "year", y = res$value_col), color = "red", size = 3) +
-      scale_y_continuous(labels = scales::percent) +
+      scale_y_continuous(labels = scales::percent,limits = c(0.3, 1)) +
       labs(
         title = paste("Dự báo:", title_text, "-", area_label),
         subtitle = "Dữ liệu nội suy từ các điểm khảo sát (màu đỏ)",
