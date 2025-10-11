@@ -81,43 +81,107 @@ Các biến số chính được sử dụng
 
 ## **1. Kết quả làm sạch dữ liệu**
 
-```{r load-data, results = 'hide'}
-read_hh <- function(path, vars) {
-  read_sav(path) %>% dplyr::select(any_of(vars))
+```{r func-load-data, results = 'hide'}
+read_hh <- function(path, vars, mics) {
+  df <- read_sav(path)
+  
+  filter_condition <- switch(
+    as.character(mics),
+    "6" = quote(HH12 == 1 & HH46 == 01),
+    "5" = quote(HH9 == 01),
+    "4" = quote(HH9 == 01),
+    "3" = quote(hh9 == 1),
+    "2" = quote(HI10 == 1),
+    NULL
+  )
+  
+  # Nếu có điều kiện lọc, áp dụng; nếu không, giữ nguyên
+  if (!is.null(filter_condition)) {
+    df <- df %>% filter(!!filter_condition)
+  }
+  
+  # Chỉ giữ các biến cần thiết
+  df <- df %>% dplyr::select(any_of(vars))
+  
+  return(df)
 }
 
-read_ch <- function(path, vars) {
-  read_sav(path) %>% dplyr::select(any_of(vars))
+read_ch <- function(path, vars, mics) {
+  df <- read_sav(path) 
+  
+  # Xác định điều kiện lọc theo từng bộ MICS
+  filter_condition <- switch(
+    as.character(mics),
+    "6" = quote(UF10 == 1),
+    "5" = quote(UF9 == 1),
+    "4" = quote(UF9 == 1),
+    NULL
+  )
+  
+  # Áp dụng lọc nếu có
+  if (!is.null(filter_condition)) {
+    df <- df %>% filter(!!filter_condition)
+  }
+  
+  # Chọn các biến cần thiết
+  df <- df %>% dplyr::select(any_of(vars))
+  
+  return(df)
 }
+```
 
+``` {r load-data, results = 'hide'}
 # --- Đọc dữ liệu các năm MICS ---
-vars_hh_ms6 <- c("HH1","HH2","HH6","WS1","WS11","helevel","HC2","windex5","windex5r","windex5u","HH5Y")
-vars_hh_ms5 <- c("HH1","HH2","HH6","WS1","WS8","helevel","windex5","HH5Y")
-vars_hh_ms4 <- c("HH1","HH2","HH6","WS1","WS8","helevel","windex5","HH5Y")
-vars_hh_ms3 <- c("diaban","hh2","hh6","ws1","ws7","helevel","wlthind5","hh5y")
-vars_hh_ms2 <- c("HI1","HI2","HI6","WS1","WS3","ED16A","WLTHIND5")
-
-vars_ch <- c("HH1","HH2","CA1")
-
 # MICS6
-hh6 <- read_hh("E:/regression-analysis/final-exam/Viet Nam MICS6 Datasets/Viet Nam MICS6 SPSS Datasets/hh.sav", vars_hh_ms6)
-ch6 <- read_ch("E:/regression-analysis/final-exam/Viet Nam MICS6 Datasets/Viet Nam MICS6 SPSS Datasets/ch.sav", vars_ch)
+vars_hh_ms6 <- c("HH1","HH2","HH6","WS1","WS11","helevel","HC2","windex5","windex5r","windex5u","HH5Y")
+hh6 <- read_hh("E:/regression-analysis/final-exam/Viet Nam MICS6 Datasets/Viet Nam MICS6 SPSS Datasets/hh.sav",
+               vars_hh_ms6, mics = 6)
+ch6 <- read_ch(
+  "E:/regression-analysis/final-exam/Viet Nam MICS6 Datasets/Viet Nam MICS6 SPSS Datasets/ch.sav",
+  vars = c("HH1", "HH2", "CA1", "UF10"),
+  mics = 6
+)
 
 # MICS5
-hh5 <- read_hh("E:/regression-analysis/final-exam/Regression-Analysis/final-exam/Viet Nam_MICS5_Datasets/Viet Nam MICS 2013-14 SPSS Datasets/hh.sav", vars_hh_ms5)
-ch5 <- read_ch("E:/regression-analysis/final-exam/Regression-Analysis/final-exam/Viet Nam_MICS5_Datasets/Viet Nam MICS 2013-14 SPSS Datasets/ch.sav", vars_ch)
+vars_hh_ms5 <- c("HH1","HH2","HH6","WS1","WS8","helevel","windex5","HH5Y")
+hh5 <- read_hh("E:/regression-analysis/final-exam/Regression-Analysis/final-exam/Viet Nam_MICS5_Datasets/Viet Nam MICS 2013-14 SPSS Datasets/hh.sav",
+               vars_hh_ms5, mics = 5)
+ch5 <- read_ch(
+  "E:/regression-analysis/final-exam/Regression-Analysis/final-exam/Viet Nam_MICS5_Datasets/Viet Nam MICS 2013-14 SPSS Datasets/ch.sav",
+  vars = c("HH1", "HH2", "CA1", "UF9"),
+  mics = 5
+)
 
 # MICS4
-hh4 <- read_hh("E:/regression-analysis/final-exam/Regression-Analysis/final-exam/Vietnam_MICS4_Datasets/Vietnam MICS 2010-2011 SPSS Datasets/hh.sav", vars_hh_ms4)
-ch4 <- read_ch("E:/regression-analysis/final-exam/Regression-Analysis/final-exam/Vietnam_MICS4_Datasets/Vietnam MICS 2010-2011 SPSS Datasets/ch.sav", vars_ch)
+vars_hh_ms4 <- c("HH1","HH2","HH6","WS1","WS8","helevel","windex5","HH5Y")
+hh4 <- read_hh("E:/regression-analysis/final-exam/Regression-Analysis/final-exam/Vietnam_MICS4_Datasets/Vietnam MICS 2010-2011 SPSS Datasets/hh.sav",
+               vars_hh_ms4, mics = 4)
+ch4 <- read_ch(
+  "E:/regression-analysis/final-exam/Regression-Analysis/final-exam/Vietnam_MICS4_Datasets/Vietnam MICS 2010-2011 SPSS Datasets/ch.sav",
+  vars = c("HH1", "HH2", "CA1", "UF9"),
+  mics = 4
+)
 
 # MICS3
-hh3 <- read_hh("E:/regression-analysis/final-exam/Regression-Analysis/final-exam/Vietnam_Datasets/Vietnam MICS 2006 SPSS Datasets/hh.sav", vars_hh_ms3)
-ch3 <- read_ch("E:/regression-analysis/final-exam/Regression-Analysis/final-exam/Vietnam_Datasets/Vietnam MICS 2006 SPSS Datasets/ch.sav", c("diaban","hh2","ca1"))
+vars_hh_ms3 <- c("diaban","hh2","hh6","ws1","ws7","helevel","wlthind5","hh5y")
+hh3 <- read_hh("E:/regression-analysis/final-exam/Regression-Analysis/final-exam/Vietnam_Datasets/Vietnam MICS 2006 SPSS Datasets/hh.sav",
+               vars_hh_ms3, mics = 3)
+ch3 <- read_ch(
+  "E:/regression-analysis/final-exam/Regression-Analysis/final-exam/Vietnam_Datasets/Vietnam MICS 2006 SPSS Datasets/ch.sav",
+  vars = c("diaban", "hh2", "ca1"),
+  mics = 3
+)
 
 # MICS2
-hh2 <- read_hh("E:/regression-analysis/final-exam/Regression-Analysis/final-exam/Viet Nam 2000 MICS_Datasets/hhVI.sav", vars_hh_ms2)
-ch2 <- read_ch("E:/regression-analysis/final-exam/Regression-Analysis/final-exam/Viet Nam 2000 MICS_Datasets/chVI.sav", c("HI1","HI2","CI1"))
+vars_hh_ms2 <- c("HI1","HI2","HI6","WS1","WS3","ED16A","WLTHIND5")
+hh2 <- read_hh("E:/regression-analysis/final-exam/Regression-Analysis/final-exam/Viet Nam 2000 MICS_Datasets/hhVI.sav",
+               vars_hh_ms2, mics = 2)
+ch2 <- read_ch(
+  "E:/regression-analysis/final-exam/Regression-Analysis/final-exam/Viet Nam 2000 MICS_Datasets/chVI.sav",
+  vars = c("HI1", "HI2", "CI1"),
+  mics = 2
+)
+
 ```
 
 **Xử lý missing:**
@@ -132,33 +196,16 @@ kable(hh_missing, caption="Bảng 1. Tỷ lệ thiếu dữ liệu trong hh.sav"
 kable(ch_missing, caption="Bảng 2. Tỷ lệ thiếu dữ liệu trong ch.sav") %>% kable_styling()
 ```
 
-**Tỷ lệ dữ liệu thiếu:** đa phần các biến có tỷ lệ thiếu thấp 0–4.6%.
+**Tỷ lệ dữ liệu thiếu:** đa phần các biến không có dữ liệu thiếu
 
--   **Hai biến có tỷ lệ thiếu cao:** `windex5r` (30.06%) và `windex5u` (65.36%) do áp dụng cho nhóm khu vực khác nhau.
+-   **Hai biến có tỷ lệ thiếu cao:** `windex5r` (31.5%) và `windex5u` (68.49%) do áp dụng cho nhóm khu vực khác nhau.
 
 **Cách xử lý:**
 
--   Thay dữ liệu thiếu bằng cách sử dụng thuật toán **KNN** để dự đoán giá trị của dữ liệu thiếu thông qua các dữ liệu xung quang dữ liệu thiếu.
-
 -   Giữ nguyên giá trị trong `windex5r, windex5u`.
 
-```{r op-missing, results = 'hide'}
-# --- KNN Imputation (chỉ cho numeric, trừ windex5r & windex5u) ---
-hh_temp <- hh6 %>% dplyr::select(-c(windex5r, windex5u))
-hh_knn  <- VIM::kNN(hh_temp, k = 5) %>% dplyr::select(-matches("_imp$"))
-
-# Ghép lại với 2 biến đặc thù
-hh6_clean <- bind_cols(
-  hh_knn,
-  hh6 %>% dplyr::select(any_of(c("windex5r", "windex5u")))
-)
-
-# Kiểm tra lại
-colMeans(is.na(hh6_clean))*100
-```
-
 ```{r create-vars, f}
-# Biến tiêu chảy ở trẻ
+# --- Tạo biến tiêu chảy ở trẻ ---
 ch6_clean <- ch6 %>% 
   mutate(diarrhea = if_else(CA1 == 1, 1, 0))
 
@@ -171,10 +218,11 @@ diarrhea_hh <- ch6_clean %>%
   )
 
 # Ghép vào dữ liệu hộ
+hh6_clean <- hh6
 hh6_clean <- hh6_clean %>% 
   left_join(diarrhea_hh, by = c("HH1", "HH2"))
 
-# Tạo biến về nước và vệ sinh
+# --- Tạo biến nước sạch và vệ sinh ---
 hh6_clean <- hh6_clean %>% 
   mutate(
     safe_water = case_when(
@@ -188,7 +236,6 @@ hh6_clean <- hh6_clean %>%
       TRUE ~ NA_real_
     )
   )
-
 
 ```
 
@@ -280,7 +327,7 @@ ggplot(san_tab, aes(x = "", y = n, fill = factor(improved_sanitation))) +
   theme_void()
 ```
 
-**Nhận xét:** Tỷ lệ hộ có nhà tiêu hợp vệ sinh là 79%, vẫn còn 21% hộ chưa có nhà tiêu đạt chuẩn, tiềm ẩn nguy cơ ô nhiễm.
+**Nhận xét:** Tỷ lệ hộ có nhà tiêu hợp vệ sinh là 79.4%, vẫn còn 20.6% hộ chưa có nhà tiêu đạt chuẩn, tiềm ẩn nguy cơ ô nhiễm.
 
 ### *Biểu đồ cột so sánh theo khu vực* {.tabset .tabset-fade .tabset-pills}
 
@@ -346,7 +393,7 @@ ggplot(san_by_area, aes(x = factor(HH6), y = pct, fill = factor(improved_sanitat
 
 ```
 
-**Nhận xét:** Khu vực thành thị có điều kiện vệ sinh tốt hơn nhiều so với nông thôn. Tỷ lệ hộ có nhà tiêu hợp vệ sinh ở nông thôn thấp hơn 19.2% so với thành thị.
+**Nhận xét:** Khu vực thành thị có điều kiện vệ sinh tốt hơn nhiều so với nông thôn. Tỷ lệ hộ có nhà tiêu hợp vệ sinh ở nông thôn thấp hơn 18.4% so với thành thị.
 
 ## **3. Kết quả phân tích hai biến**
 
@@ -383,13 +430,13 @@ summary(model1)
 
 **Nhận xét:** Tất cả các biến đều có ý nghĩa thống kê. Mô hình cho thấy **điều kiện kinh tế** và **học vấn** là **yếu tố quyết định tích cực**, trong khi **khu vực và dân tộc** là rào cản đối với vệ sinh cải thiện.
 
--   `windex5` (0.56181): Mức sống cao → xác suất có nhà tiêu hợp vệ sinh **tăng**
+-   `windex5` (0.95219): Mức sống cao → xác suất có nhà tiêu hợp vệ sinh **tăng**
 
--   `helevel` (0.27874): Học vấn chủ hộ cao → **tăng khả năng có** nhà tiêu hợp vệ sinh**.**
+-   `helevel` (0.19517): Học vấn chủ hộ cao → **tăng khả năng có** nhà tiêu hợp vệ sinh**.**
 
--   `HH6` (-0.52970): Khu vực (thành thị/nông thôn) có ảnh hưởng **âm**, cho thấy khả năng có nhà tiêu hợp vệ sinh ở nông thôn kém hơn.
+-   `HH6` (-0.14234): Khu vực (thành thị/nông thôn) có ảnh hưởng **âm**, cho thấy khả năng có nhà tiêu hợp vệ sinh ở nông thôn kém hơn.
 
--   `HC2` (-0.23412): Dân tộc thiểu số có khả năng có khả năng có nhà tiêu hợp vệ sinh thấp hơn.
+-   `HC2` (-0.13032): Dân tộc thiểu số có khả năng có khả năng có nhà tiêu hợp vệ sinh thấp hơn.
 
 #### **3.2.2. Phân tích mối liên quan giữa yếu tố về điều kiện kinh tế - xã hội (ở thành thị hoặc nông thôn) và học vấn với khả năng có nhà tiêu hợp vệ sinh.** {.tabset .tabset-fade .tabset-pills}
 
@@ -419,7 +466,7 @@ summary(model3)
 
 **Nhận xét:** Ở thành thị, các yếu tố mức sống và học vấn vẫn là yếu tố chính quyết định việc có nhà tiêu hợp vệ sinh.
 
--   `windex5u`, `HC2` có ý nghĩa thống kê (p \< 0.001).
+-   `windex5u` có ý nghĩa thống kê (p \< 0.001).
 
 #### \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
 
@@ -542,7 +589,7 @@ ggplot(summary_stats, aes(x = year, y = pct_improved_water, color = factor(area)
   geom_smooth(method = "lm", se = FALSE, linetype = "dashed") +
   scale_y_continuous(
     labels = scales::percent,
-    limits = c(0.5, 1),
+    limits = c(0.7, 1),
     breaks = seq(0.5, 1, 0.1)
   ) +
   scale_color_manual(
@@ -571,7 +618,7 @@ ggplot(summary_stats, aes(x = year, y = pct_improved_sanitation, color = factor(
   geom_line(linewidth = 1.2) + 
   geom_point(size = 3) +
   geom_smooth(method = "lm", se = FALSE, linetype = "dashed") +
-  scale_y_continuous(labels = scales::percent, limits = c(0, 1)) +
+  scale_y_continuous(labels = scales::percent, limits = c(0.2, 1)) +
   scale_color_manual(
     name = "Khu vực",                       # Tiêu đề chú thích
     values = c("1" = "#00bec5", "2" = "#f9776d"), # Màu: xanh lam / xanh lá
@@ -667,7 +714,7 @@ f_sanitation_urban <- create_forecast(summary_stats, "pct_improved_sanitation", 
 
 Chúng tôi kiểm định giả thuyết "Hộ gia đình sử dụng nguồn nước không an toàn có tỷ lệ trẻ em (\< 5 tuổi) bị tiêu chảy cao hơn" bằng kiểm định Chi-bình phương.
 
-```{r chi_square_test}
+```{r chi_square_test, fig.dim = c(10,8)}
 # Tạo một hàm xử lý để tránh lặp code.
 # Hàm này sẽ nhận vào dữ liệu hộ gia đình, dữ liệu trẻ em, năm, và một "bản đồ" tên biến.
 process_mics_data <- function(hh_df, ch_df, year, vars_map) {
@@ -713,8 +760,6 @@ map_mics6 <- list(id1_hh="HH1", id2_hh="HH2", water="WS1", id1_ch="HH1", id2_ch=
 list_of_hh_data <- list(hh2, hh3, hh4, hh5, hh6)
 list_of_ch_data <- list(ch2, ch3, ch4, ch5, ch6)
 list_of_maps <- list(map_mics2, map_mics3, map_mics4, map_mics5, map_mics6)
-
-# SỬA LỖI: Đảm bảo list các năm có đúng 5 phần tử
 list_of_years <- c(2000, 2006, 2011, 2014, 2021)
 
 # Áp dụng hàm xử lý cho tất cả các năm và gộp lại thành một bảng duy nhất
