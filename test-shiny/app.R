@@ -157,7 +157,7 @@ ui <- dashboardPage(
   dashboardSidebar(
     sidebarMenu(
       menuItem("Giới thiệu", tabName = "intro", icon = icon("info-circle")),
-      menuItem("Tổng quan MICS 2021", tabName = "overview", icon = icon("dashboard")),
+      menuItem("Tổng quan", tabName = "overview", icon = icon("dashboard")),
       menuItem("Phân tích Suy luận", tabName = "inference", icon = icon("chart-line")),
       menuItem("Phân tích Chuỗi thời gian", tabName = "timeseries", icon = icon("clock"))
     )
@@ -186,7 +186,20 @@ ui <- dashboardPage(
                       tags$li("Phân tích xu hướng trong 20 năm qua và dự báo 10 năm tới.")
                     ),
                     h3("Nguồn dữ liệu:"),
-                    p("Khảo sát Đánh giá các Mục tiêu về Trẻ em và Phụ nữ (MICS) của UNICEF tại Việt Nam, từ năm 2000 đến 2021.")
+                    p("Khảo sát Đánh giá các Mục tiêu về Trẻ em và Phụ nữ (MICS) của UNICEF tại Việt Nam, từ năm 2000 đến 2021."),
+                    h3("Các biến số sử dụng:"),
+                    tags$ul(
+                      tags$li("WS11: Loại nhà vệ sinh của hộ gia đình"),
+                      tags$li("WS1: Nguồn nước uống chính của hộ gia đình"),
+                      tags$li("CA1: Trẻ có bị tiêu chảy trong 2 tuần qua không."),
+                      tags$li("HH5Y: Năm tiến hành nghiên cứu"),
+                      tags$li("HH6: Khu vực sinh sống"),
+                      tags$li("HC2: Dân tộc chủ hộ"),
+                      tags$li("windex5: Mức sống kinh tế của hộ gia đình"),
+                      tags$li("windex5r: Mức sống kinh tế của hộ gia đình ở nông thôn"),
+                      tags$li("windex5u: Mức sống kinh tế của hộ gia đình ở thành thị"),
+                      tags$li("helevel: Trình độ học vấn của chủ hộ")
+                    )
                 )
               )
       ),
@@ -414,17 +427,16 @@ server <- function(input, output) {
         pl$x$data[[i]]$name <- "Nông thôn"
       }
     }
-    
-    # Bước 4: Trả về đối tượng plotly đã được chỉnh sửa
     return(pl)
   })
   
   # Biểu đồ xu hướng nhà tiêu HVS
   output$trend_plot_sanitation <- renderPlotly({
     p <- ggplot(summary_stats, aes(x = year, y = pct_improved_sanitation, color = factor(area), group = factor(area))) +
-      geom_line(linewidth = 1) + geom_point(size = 2.5) +
+      geom_line(linewidth = 1) + 
+      geom_point(size = 2.5) +
       scale_y_continuous(labels = scales::percent, limits = c(0.2, 1)) +
-      scale_color_manual(name = "Khu vực", values = c("1" = "#00bec5", "2" = "#f9776d"), labels = c("1" = "Thành thị", "2" = "Nông thôn")) +
+      scale_color_manual(name = "Khu vực", values = c("1" = "#00bec5", "2" = "#f9776d")) +
       labs(title = "Xu hướng Sử dụng Nhà tiêu Hợp vệ sinh (2000-2021)", x = "Năm", y = "Tỷ lệ Hộ gia đình") +
       theme_minimal(base_size = 12)
     
@@ -437,6 +449,7 @@ server <- function(input, output) {
         pl$x$data[[i]]$name <- "Nông thôn"
       }
     }
+    return(pl)
   })
   
   # Reactive expression cho mô hình ARIMA
