@@ -286,6 +286,14 @@ ui <- dashboardPage(
                              verbatimTextOutput("arima_summary")
                       )
                     )
+                ),
+                box(width = 12, title = "Phân tích Mối liên quan: Nước sạch và Tiêu chảy (2000-2021)", status = "success", solidHeader = TRUE,
+                    tabsetPanel(
+                      tabPanel("Xu hướng Tỷ lệ Tiêu chảy", 
+                               br(), # Thêm một khoảng ngắt dòng cho đẹp
+                               plotlyOutput("diarrhea_trend_plot")
+                      )
+                    )
                 )
               )
       )
@@ -452,6 +460,24 @@ server <- function(input, output) {
     return(pl)
   })
   
+  output$diarrhea_trend_plot <- renderPlotly({
+    p <- ggplot(diarrhea_trends, aes(x = year, y = diarrhea_rate, color = water_status, group = water_status)) +
+      geom_line(linewidth = 1.2) +
+      geom_point(size = 4) +
+      scale_y_continuous(labels = scales::percent_format()) +
+      scale_color_manual(values = c("Nước sạch" = "#00BFC4", "Nước không sạch" = "#F8766D")) +
+      labs(
+        title = "Xu hướng Tỷ lệ Tiêu chảy ở Trẻ em theo Chất lượng Nguồn nước",
+        x = "Năm",
+        y = "Tỷ lệ Trẻ bị Tiêu chảy (%)",
+        color = "Chất lượng Nguồn nước"
+      ) +
+      theme_minimal(base_size = 10) +
+      theme(legend.position = "bottom")
+    
+    ggplotly(p)
+  })
+  
   # Reactive expression cho mô hình ARIMA
   arima_forecast_reactive <- eventReactive(c(input$forecast_metric, input$forecast_area), {
     
@@ -494,6 +520,70 @@ server <- function(input, output) {
   output$arima_summary <- renderPrint({
     summary(arima_forecast_reactive()$model)
   })
+  
+  # --- XỬ LÝ DỮ LIỆU TIÊU CHẢY QUA CÁC NĂM ---
+  process_mics_data <- function(hh_df, ch_df, year, vars_map) {
+    # Đổi tên cột child data để nhất quán
+    names(ch_df)[names(ch_df) == vars_map$id1_ch] <- "ID1"
+    names(ch_df)[names(ch_df) == vars_map$id2_ch] <- "ID2"
+    names(ch_df)[names(ch_df) == vars_map$diarrhea] <- "DIARRHEA_VAR"
+    
+    # Đổi tên cột household data để nhất quán
+    names(hh_df)[names(hh_df) == vars_map$id1_hh] <- "ID1"
+    names(hh_df)[names(hh_df) == vars_map$id2_hh] <- "ID2"
+    names(hh_df)[names(hh_df) == vars_map$water] <- "WATER_VAR"
+    
+    # Tạo biến improved_water
+    hh_df <- hh_df %>%
+      mutate(
+        improved_water = ifelse(WATER_VAR %in% vars_map$safe_water_codes, 1, 0)
+      )
+    
+    # Tạo biến has_diarrhea từ child data
+    ch_df <- ch_df %>%
+      mutate(has_diarrhea = ifelse(DIARRHEA_VAR == 1, 1, 0))
+    
+    # Gộp hai bộ dữ liệu
+    merged_df <- inner_join(
+      hh_df %>% dplyr::select(ID1, ID2, improved_water),
+      ch_df %>% dplyr::select(ID1, ID2, has_diarrhea),
+      by = c("ID1", "ID2")
+    ) %>%
+      mutate(year = year)
+    
+    return(merged_df)
+  }
+  
+  # Định nghĩa các biến và mã số khác nhau cho từng năm
+  map_mics2 <- list(id1_hh="HI1", id2_hh="HI2", water="WS1", id1_ch="HI1", id2_ch="HI2", diarrhea="CI1", safe_water_codes = c(1,2,8,11,12,13))
+  map_mics3 <- list(id1_hh="diaban", id2_hh="hh2", water="ws1", id1_ch="diaban", id2_ch="hh2", diarrhea="ca1", safe_water_codes = c(11:14, 21, 31, 41, 51, 91))
+  map_mics4 <- list(id1_hh="HH1", id2_hh="HH2", water="WS1", id1_ch="HH1", id2_ch="HH2", diarrhea="CA1", safe_water_codes = c(11:14, 21, 31, 41, 51, 91))
+  map_mics5 <- list(id1_hh="HH1", id2_hh="HH2", water="WS1", id1_ch="HH1", id2_ch="HH2", diarrhea="CA1", safe_water_codes = c(11:14, 21, 31, 41, 51, 91))
+  map_mics6 <- list(id1_hh="HH1", id2_hh="HH2", water="WS1", id1_ch="HH1", id2_ch="HH2", diarrhea="CA1", safe_water_codes = c(11:14, 21, 31, 41, 51, 72, 91, 92))
+  
+  # Tạo list các bộ dữ liệu đã đọc vào
+  list_of_hh_data <- list(hh2, hh3, hh4, hh5, hh6)
+  list_of_ch_data <- list(ch2, ch3, ch4, ch5, ch6)
+  list_of_maps <- list(map_mics2, map_mics3, map_mics4, map_mics5, map_mics6)
+  list_of_years <- c(2000, 2006, 2011, 2014, 2021)
+  
+  # Áp dụng hàm xử lý cho tất cả các năm và gộp lại
+  all_diarrhea_data <- pmap_dfr(
+    list(list_of_hh_data, list_of_ch_data, list_of_years, list_of_maps),
+    process_mics_data
+  )
+  
+  # Tính toán tỷ lệ tiêu chảy theo năm và nhóm nguồn nước
+  diarrhea_trends <- all_diarrhea_data %>%
+    na.omit() %>%
+    group_by(year, improved_water) %>%
+    summarise(
+      diarrhea_rate = mean(has_diarrhea, na.rm = TRUE),
+      .groups = "drop"
+    ) %>%
+    mutate(
+      water_status = ifelse(improved_water == 1, "Nước sạch", "Nước không sạch")
+    )
   
 }
 
