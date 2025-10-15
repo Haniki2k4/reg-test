@@ -119,9 +119,17 @@ hh6_clean <- hh6 %>%
   )
 
 # Hồi quy Logistic (giữ nguyên)
-model1 <- glm(improved_sanitation ~ windex5 + helevel + HH6 + HC2, data = hh6_clean, family = binomial)
-model2 <- glm(improved_sanitation ~ windex5r + helevel + HC2, data = hh6_clean, family = binomial)
-model3 <- glm(improved_sanitation ~ windex5u + helevel + HC2, data = hh6_clean, family = binomial)
+hh6_clean <- hh6_clean %>%
+  mutate(
+    windex5_factor = factor(windex5, labels = c("Nghèo nhất", "Nhóm_2", "Nhóm_3", "Nhóm_4", "Giàu nhất")),
+    windex5r_factor = factor(windex5r, labels = c("Nghèo nhất", "Nhóm_2", "Nhóm_3", "Nhóm_4", "Giàu nhất")),
+    windex5u_factor = factor(windex5u, labels = c("Nghèo nhất", "Nhóm_2", "Nhóm_3", "Nhóm_4", "Giàu nhất")),
+    helevel_factor = factor(helevel, labels = c("Không bằng cấp", "Tiểu học", "THCS", "THPT", "Trung cấp", "Cao đẳng/Đại học", "Không biết")) 
+  )
+
+model1 <- glm(improved_sanitation ~ windex5_factor + helevel_factor + HH6 + HC2, data = hh6_clean, family = binomial)
+model2 <- glm(improved_sanitation ~ windex5r_factor + helevel_factor + HC2, data = hh6_clean, family = binomial)
+model3 <- glm(improved_sanitation ~ windex5u_factor + helevel_factor + HC2, data = hh6_clean, family = binomial)
 
 # Xử lý dữ liệu chuỗi thời gian (giữ nguyên logic, chỉ cần đảm bảo các object hh2, hh3, hh4, hh5, hh6 đã được tải ở trên)
 clean_mics2 <- hh2 %>% dplyr::select(area=HI6, water_source=WS1, toilet_type=WS3, wealth_quintile=WLTHIND5) %>% mutate(year=2000, improved_water=ifelse(water_source %in% c(1,2,3,4,5,6,8), 1, 0), improved_sanitation=ifelse(toilet_type %in% c(1,2,3,4), 1, 0))

@@ -27,13 +27,12 @@ knitr::opts_chunk$set(
 library(haven)      # đọc file .sav
 library(dplyr)      # xử lý dữ liệu
 library(ggplot2)    # trực quan hóa
-library(janitor)    # tabyl tần số
+library(janitor)    # bảng tần số tabyl
 library(tidyr)      # reshape dữ liệu
 library(scales)     # hiển thị %
 library(knitr)
 library(kableExtra)
 library(MASS)
-library(VIM)
 library(zoo)      # Cần cho việc nội suy na.approx()
 library(forecast) # Thư viện chính cho mô hình chuỗi thời gian (ARIMA, Holt)
 library(ggfortify)# Để vẽ đồ thị forecast đẹp hơn với ggplot2
@@ -79,7 +78,8 @@ Các biến số chính được sử dụng
 
     -   `HH5Y`: Năm tiến hành nghiên cứu
 
-## **I. ** 
+## **I. MỐI LIÊN QUAN GIỮA ĐIỀU KIỆN VỆ SINH, NGUỒN NƯỚC, VÀ SỨC KHỎE CỦA CÁC THÀNH VIÊN TRONG HỘ GIA ĐÌNH**
+
 ### **1. Kết quả làm sạch dữ liệu**
 
 ```{r func-load-data, results = 'hide'}
@@ -467,7 +467,7 @@ summary(model3)
 
 **Nhận xét:** Ở thành thị, các yếu tố mức sống và học vấn vẫn là yếu tố chính quyết định việc có nhà tiêu hợp vệ sinh.
 
--   `windex5u` có ý nghĩa thống kê (p \< 0.001).
+-   `windex5u`, `helevel` có ý nghĩa thống kê (p \< 0.001).
 
 #### \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
 
@@ -475,7 +475,9 @@ summary(model3)
 
 ------------------------------------------------------------------------
 
-## **II. Sự thay đổi của các vấn đề trong 20 năm (2000-2021)**
+## **II. SỰ THAY ĐỔI CỦA CÁC VẤN ĐỀ TRONG 20 NĂM**
+
+## **(2000-2021)**
 
 ```{r load_data1}
 # Xử lý MICS 2000
@@ -568,7 +570,7 @@ all_mics_data <- bind_rows(
 
 ##### Nguồn nước sạch
 
-```{r plot_trends}
+```{r plot_trends, fig.dim = c(10,6)}
 # Tính toán tỷ lệ phần trăm
 summary_stats <- all_mics_data %>%
   filter(!is.na(area)) %>%
@@ -606,16 +608,27 @@ ggplot(summary_stats, aes(x = year, y = pct_improved_water, color = factor(area)
     color = "Khu vực"
   ) +
   theme_minimal(base_size = 14)
-
-
-
 ```
 
 **Nhận xét:**
 
+Khu vực thành thị: Tỷ lệ hộ gia đình có nguồn nước hợp vệ sinh duy trì ở mức cao (\~95–100%) từ năm 2000 đến 2010.
+
+-   Tuy nhiên, năm 2015 sụt giảm đột ngột nhưng sau đó phục hồi lại lên gần 100% vào năm 2021.
+
+→ Xu hướng tổng thể: cao, ổn định, có một giai đoạn biến động giữa kỳ.
+
+Khu vực nông thôn: Xuất phát từ mức thấp hơn (\~75% năm 2000), tăng dần đến \~90% năm 2010.
+
+-   Cũng có sự giảm mạnh năm 2015 xuống gần 80% và phục hồi rõ rệt lên khoảng 95% vào năm 2021.
+
+→ Xu hướng tổng thể: cải thiện mạnh mẽ, dù có một giai đoạn gián đoạn tạm thời.
+
+**Kết luận:** Đường hồi quy tuyến tính (linear trendline) của cả hai khu vực đều có hệ số góc dương, phản ánh xu hướng tăng dài hạn của tỷ lệ hộ tiếp cận nước hợp vệ sinh thể hiện xu hướng cải thiện bền vững, trong đó độ dốc ở nông thôn cao hơn, phản ánh tốc độ tiến bộ nhanh hơn
+
 ##### Nhà tiêu Hợp vệ sinh
 
-```{r plot-trend-2}
+```{r plot-trend-2, fig.dim = c(10,6)}
 # Biểu đồ xu hướng nhà tiêu
 ggplot(summary_stats, aes(x = year, y = pct_improved_sanitation, color = factor(area), group = factor(area))) +
   geom_line(linewidth = 1.2) + 
@@ -637,11 +650,27 @@ ggplot(summary_stats, aes(x = year, y = pct_improved_sanitation, color = factor(
 
 **Nhận xét:**
 
+Khu vực thành thị: Tăng đều từ \~78% (2000) lên \~95% (2021).
+
+-   Biến động nhỏ quanh giai đoạn 2010–2015, nhưng nhìn chung ổn định.
+
+→ Xu hướng tổng thể: tăng chậm nhưng bền vững, hiện đã đạt mức cao.
+
+Khu vực nông thôn: Từ \~30% (2000) tăng mạnh lên \~80% (2021).
+
+-   Dù có vài năm chững lại (khoảng 2010–2015), xu hướng dài hạn vẫn rõ ràng là tăng nhanh.
+
+→ Xu hướng tổng thể: cải thiện đáng kể, nhưng vẫn chưa bắt kịp thành thị.
+
+**Kết luận:** Khoảng cách giữa thành thị và nông thôn trong sử dụng nhà tiêu hợp vệ sinh đã thu hẹp đáng kể, phản ánh hiệu quả của các chương trình vệ sinh nông thôn. Đườngtuyến tính đi lên cho thấyxu hướng cải thiện ổn định**,** với nông thôn tiến bộ nhanh hơn.
+
 \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
 
 #### **Mô hình hóa và Dự báo bằng ARIMA** {.tabset .tabset-fade .tabset-pills}
 
 Do dữ liệu được thu thập không đều -\> Sử dụng phương pháp **nội suy tuyến tính** để tạo chuỗi thời gian hàng năm, sau đó áp dụng mô hình `auto.arima` để tìm ra mô hình phù hợp nhất và dự báo cho 10 năm tới.
+
+[Bảng 7. Kết quả Mô hình ARIMA]{style="color: gray;"}
 
 ```{r arima_forecasting}
 # Hàm tạo dự báo tự động
@@ -666,7 +695,7 @@ create_forecast <- function(data, value_col, area_filter, title_text) {
   plot <- forecast::autoplot(arima_forecast) +
     geom_point(data = ts_data_sparse, aes_string(x = "year", y = value_col),
                color = "red", size = 3) +
-    scale_y_continuous(labels = scales::percent) +
+    scale_y_continuous(labels = scales::percent, limits = c(0.3, 1)) +
     labs(
       title = paste("Dự báo:", title_text, "-", area_label),
       subtitle = "Dữ liệu nội suy từ các điểm khảo sát (màu đỏ)",
@@ -674,13 +703,13 @@ create_forecast <- function(data, value_col, area_filter, title_text) {
     ) +
     theme_minimal(base_size = 14) +
     theme(
-      plot.title = element_text(family = "Times New Roman", face = "bold", size = 16),
-      plot.subtitle = element_text(family = "Times New Roman", size = 13)
+      plot.title = element_text(face = "bold", size = 16),
+      plot.subtitle = element_text(size = 13)
     )
   
-  print(plot)
   cat(paste0("\n**Mô hình ARIMA cho ", title_text, " - ", area_label, "**\n"))
   print(summary(arima_model))
+  print(plot)
   
   return(arima_forecast)
 }
@@ -689,41 +718,69 @@ create_forecast <- function(data, value_col, area_filter, title_text) {
 
 ##### Nguồn nước - Nông thôn
 
-```{r forcasting_1}
+```{r forcasting_1, fig.dim = c(8, 6)}
 f_water_rural <- create_forecast(summary_stats, "pct_improved_water", 2, "Tỷ lệ  sử dụng Nguồn nước sạch")
 ```
 
-**Diễn giải kết quả:**
+**Diễn giải kết quả:** Mô hình ARIMA(2,0,0)
+
+-   Kết quả dự báo cho thấy sau 2021 có xu hướng giảm nhẹ đến 2025, rồi tăng trở lại sau 2027, với biên độ dao động lớn (vùng dự báo xám rộng).
+
+-   Sai số RMSE = 0.0197 cho thấy mức độ phù hợp cao và độ tin cậy tốt.
+
+→ Dự báo: có khả năng dao động tạm thời, nhưng xu hướng phục hồi tích cực đến 2030.
 
 ##### Nhà tiêu - Nông thôn
 
-```{r forcasting_2}
+```{r forcasting_2, fig.dim = c(8, 6)}
 f_sanitation_rural <- create_forecast(summary_stats, "pct_improved_sanitation", 2, "Tỷ lệ tiếp cận Nhà tiêu Hợp vệ sinh")
 ```
 
-**Diễn giải kết quả:**
+**Diễn giải kết quả:**Mô hình ARIMA(0,1,0) với drift
+
+-   Xu hướng tăng ổn định và liên tục sau 2021.
+
+-   Độ trôi (drift) dương 0.0238 → cho thấy mức tăng hàng năm ổn định.
+
+-   Giá trị RMSE = 0.0308 tuy cao hơn nhóm nước sạch nhưng vẫn trong mức chấp nhận được, phản ánh dữ liệu có dao động nhẹ nhưng xu hướng ổn định
+
+→ Dự báo: đến 2030, tỷ lệ hộ nông thôn dùng nhà tiêu hợp vệ sinh có thể vượt 90–95%.
 
 ##### Nguồn nước - Thành thị
 
-```{r forcasting_3}
+```{r forcasting_3, fig.dim = c(8, 6)}
 f_water_urban <- create_forecast(summary_stats, "pct_improved_water", 1, "Tỷ lệ sử dụng Nguồn nước sạch")
 ```
 
-**Diễn giải kết quả:**
+**Diễn giải kết quả:** Mô hình ARIMA(2,0,0)
+
+-   Tương tự nông thôn: sau 2021, tỷ lệ dự kiến giảm nhẹ giai đoạn 2022–2026, sau đó phục hồi dần đến 2030.
+
+-   Giá trị RMSE = 0.0197 cho thấy mô hình có độ chính xác cao và sai số nhỏ
+
+→ Dự báo: tình hình nước sạch thành thị duy trì ở mức cao, dao động nhỏ quanh 95–100%.
 
 ##### Nhà tiêu - Thành thị
 
-```{r forcasting_4}
+```{r forcasting_4, fig.dim = c(8,6)}
 f_sanitation_urban <- create_forecast(summary_stats, "pct_improved_sanitation", 1, "Tỷ lệ tiếp cận Nhà tiêu Hợp vệ sinh")
 ```
 
-**Diễn giải kết quả:**
+**Diễn giải kết quả:** Mô hình ARIMA(0,1,0) với drift = 0.0064.
+
+-   Dự báo xu hướng tăng nhẹ, chậm dần, đạt gần 100% vào 2030.
+
+-   Mức RMSE = 0.0134 thấp nhất trong bốn mô hình, thể hiện độ chính xác rất cao
+
+→ Dự báo: khu vực thành thị duy trì mức rất cao, gần như toàn bộ hộ dân sử dụng nhà tiêu hợp vệ sinh.
 
 #### 
 
-### **2. Kiểm định Giả thuyết về Nước sạch và Bệnh Tiêu chảy qua 20 năm**
+### **2. K**iểm định mối quan hệ giữa Nước sạch và Bệnh Tiêu chảy ở trẻ trong 20 năm
 
-```{r chi_square_test, fig.dim = c(10,8)}
+[Bảng 8. Bảng tổng hợp Tỷ lệ tiêu chảy theo năm và chất lượng nước]{style="color: gray;"}
+
+```{r chi_square_test, fig.dim = c(10,6)}
 # Tạo một hàm xử lý để tránh lặp code.
 # Hàm này sẽ nhận vào dữ liệu hộ gia đình, dữ liệu trẻ em, năm, và một "bản đồ" tên biến.
 process_mics_data <- function(hh_df, ch_df, year, vars_map) {
@@ -789,7 +846,6 @@ diarrhea_trends <- all_diarrhea_data %>%
     water_status = ifelse(improved_water == 1, "Nước sạch", "Nước không sạch")
   )
 
-cat("\n**Bảng tổng hợp Tỷ lệ tiêu chảy theo năm và chất lượng nước**\n")
 print(diarrhea_trends)
 
 
@@ -799,7 +855,7 @@ ggplot(diarrhea_trends, aes(x = year, y = diarrhea_rate, color = water_status, g
   geom_point(size = 4) +
   scale_y_continuous(labels = scales::percent_format()) +
   labs(
-    title = "Mô hình xu hướng Tỷ lệ Tiêu chảy ở Trẻ em theo Chất lượng Nguồn nước (2000-2021)",
+    title = "Kiểm định mối quan hệ giữa Nước sạch và Bệnh Tiêu chảy ở trẻ trong 20 năm",
     subtitle = "So sánh giữa các hộ gia đình sử dụng nước sạch và nước không sạch",
     x = "Năm",
     y = "Tỷ lệ Trẻ em bị Tiêu chảy (%)",
@@ -810,5 +866,46 @@ ggplot(diarrhea_trends, aes(x = year, y = diarrhea_rate, color = water_status, g
 ```
 
 **Diễn giải kết quả:**
+
+-   Nhóm nước không sạch
+
+    -   Tỷ lệ trẻ bị tiêu chảy luôn cao hơn đáng kể so với nhóm dùng nước sạch.
+
+    -   Giai đoạn 2000–2005: giảm nhẹ (từ \~12% xuống \~8%).
+
+    -   Giai đoạn 2005–2015: tăng đột biến, đạt đỉnh gần 20% năm 2015, cho thấy nguy cơ bệnh tiêu chảy bùng phát khi nguồn nước xuống cấp.
+
+    -   Sau 2015, tỷ lệ giảm mạnh trở lại còn \~10% năm 2021.
+
+    → Xu hướng: dao động mạnh, có giai đoạn nguy cơ rất cao (đặc biệt quanh 2015).
+
+-   Nhóm nước sạch
+
+    -   Tỷ lệ tiêu chảy luôn thấp hơn nhóm còn lại, dao động quanh 5–10%, không vượt quá 10% trong toàn kỳ.
+
+    -   Nhìn chung giảm nhẹ và ổn định dần qua thời gian.
+
+    → Xu hướng: ổn định, cải thiện dần — phản ánh lợi ích rõ rệt của việc sử dụng nguồn nước sạch.
+
+-   So sánh hai nhóm và ý nghĩa thống kê
+
+    -   Ở tất cả các năm, đường biểu diễn của “nước không sạch” luôn nằm trên “nước sạch”, chứng tỏ sự khác biệt rõ ràng về nguy cơ mắc bệnh.
+
+    -   Khoảng cách giữa hai đường tăng mạnh vào năm 2015 → đây là thời điểm nguy cơ sức khỏe cao nhất do chất lượng nước kém.
+
+
+```{r}
+hh6_clean <- hh6_clean %>%
+  mutate(
+    windex5_factor = factor(windex5, labels = c("Nghèo nhất", "Nhóm2", "Nhóm3", "Nhóm4", "Giàu nhất")),
+  )
+
+model1_updated <- glm(improved_sanitation ~ windex5_factor + helevel+ HH6 + HC2,
+                      data = hh6_clean,
+                      family = binomial)
+
+summary(model1_updated)
+
+```
 
 ------------------------------------------------------------------------
